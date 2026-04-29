@@ -21,5 +21,7 @@ export const config = {
   matcher: [
     '/leads/:path*',
     '/api/leads/:path*',
+    '/admin/:path*',
+    '/api/admin/:path*',
   ],
 };

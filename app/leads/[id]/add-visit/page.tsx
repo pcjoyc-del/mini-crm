@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 
 type VisitForm = {
@@ -13,20 +13,9 @@ type VisitForm = {
   note: string;
 };
 
-const storeOptions = [
-  { label: 'Select store', value: '' },
-  { label: 'Sofa Plus Bangna', value: 'cmofs9js50004u6f87tkclo9c' },
-  { label: 'Sofa Plus Central Chiang Mai', value: 'cmofs9js50005u6f88m1lja53' },
-];
+type Option = { label: string; value: string };
 
-const salesOptions = [
-  { label: 'Select sales', value: '' },
-  { label: 'Ploy (Bangna)', value: 'SP-S-001' },
-  { label: 'Ton (Bangna)', value: 'SP-S-002' },
-  { label: 'Mint (Chiang Mai)', value: 'SP-S-003' },
-];
-
-const sourceOptions = [
+const sourceOptions: Option[] = [
   { label: 'Select source', value: '' },
   { label: 'Walk-in', value: 'WALK_IN' },
   { label: 'LINE', value: 'LINE' },
@@ -58,8 +47,30 @@ export default function AddVisitPage() {
     note: '',
   });
 
+  const [storeOptions, setStoreOptions] = useState<Option[]>([{ label: 'Select store', value: '' }]);
+  const [salesOptions, setSalesOptions] = useState<Option[]>([{ label: 'Select sales', value: '' }]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetch('/api/admin/stores')
+      .then((r) => r.json())
+      .then((json) =>
+        setStoreOptions([
+          { label: 'Select store', value: '' },
+          ...(json.data || []).map((s: any) => ({ label: s.name, value: s.id })),
+        ])
+      );
+
+    fetch('/api/admin/sales')
+      .then((r) => r.json())
+      .then((json) =>
+        setSalesOptions([
+          { label: 'Select sales', value: '' },
+          ...(json.data || []).map((s: any) => ({ label: s.displayName, value: s.id })),
+        ])
+      );
+  }, []);
 
   const setField = (key: keyof VisitForm, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -193,7 +204,7 @@ function SelectInput({
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: { label: string; value: string }[];
+  options: Option[];
 }) {
   return (
     <div>

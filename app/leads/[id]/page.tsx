@@ -3,49 +3,31 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 
-const statusOptions = ['NEW_LEAD', 'FOLLOW_UP', 'NEGOTIATING', 'WON', 'LOST'];
-const identityStatusOptions = ['UNVERIFIED', 'PARTIAL', 'VERIFIED'];
+type Option = { label: string; value: string };
 
-const interestedModelOptions = [
-  { label: 'Select model', value: '' },
-  { label: 'Jasmine', value: 'Jasmine' },
-  { label: 'Celine', value: 'Celine' },
-  { label: 'Zircon', value: 'Zircon' },
-  { label: 'Other', value: 'Other' },
+const statusOptions: Option[] = [
+  { label: 'NEW_LEAD', value: 'NEW_LEAD' },
+  { label: 'FOLLOW_UP', value: 'FOLLOW_UP' },
+  { label: 'NEGOTIATING', value: 'NEGOTIATING' },
+  { label: 'WON', value: 'WON' },
+  { label: 'LOST', value: 'LOST' },
 ];
 
-const categoryOptions = [
-  { label: 'Select category', value: '' },
-  { label: 'Sofa Set', value: 'CAT_SOFA_SET' },
-  { label: 'L-Shape Sofa', value: 'CAT_L_SHAPE' },
-  { label: 'Recliner', value: 'CAT_RECLINER' },
-  { label: 'Sofa Bed', value: 'CAT_SOFA_BED' },
-  { label: 'Other', value: 'CAT_OTHER' },
+const identityStatusOptions: Option[] = [
+  { label: 'UNVERIFIED', value: 'UNVERIFIED' },
+  { label: 'PARTIAL', value: 'PARTIAL' },
+  { label: 'VERIFIED', value: 'VERIFIED' },
 ];
 
-const materialOptions = [
-  { label: 'Select material', value: '' },
-  { label: 'Fabric', value: 'MAT_FABRIC' },
-  { label: 'Leather', value: 'MAT_LEATHER' },
-  { label: 'PU / Synthetic Leather', value: 'MAT_PU' },
-  { label: 'Other', value: 'MAT_OTHER' },
-];
-
-const priceRangeOptions = [
-  { label: 'Select price range', value: '' },
-  { label: '20,000-40,000 THB', value: 'PR_20_40K' },
-  { label: '40,001-70,000 THB', value: 'PR_40_70K' },
-  { label: '70,001-100,000 THB', value: 'PR_70_100K' },
-  { label: '100,000+ THB', value: 'PR_100K_UP' },
-];
-
-const usageTimingOptions = [
-  { label: 'Select usage timing', value: '' },
-  { label: 'Immediate (0-1 month)', value: 'USE_IMMEDIATE' },
-  { label: 'Within 1-3 months', value: 'USE_1_3M' },
-  { label: 'Within 3-6 months', value: 'USE_3_6M' },
-  { label: 'More than 6 months', value: 'USE_6M_UP' },
-];
+async function fetchOptions(url: string, mapFn: (item: any) => Option): Promise<Option[]> {
+  try {
+    const res = await fetch(url);
+    const json = await res.json();
+    return json.data?.map(mapFn) ?? [];
+  } catch {
+    return [];
+  }
+}
 
 function formatPhone(value: string) {
   const digits = value.replace(/\D/g, '').slice(0, 10);
@@ -66,6 +48,12 @@ export default function LeadDetailPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const [interestedModelOptions, setInterestedModelOptions] = useState<Option[]>([{ label: 'Select model', value: '' }]);
+  const [categoryOptions, setCategoryOptions] = useState<Option[]>([{ label: 'Select category', value: '' }]);
+  const [materialOptions, setMaterialOptions] = useState<Option[]>([{ label: 'Select material', value: '' }]);
+  const [priceRangeOptions, setPriceRangeOptions] = useState<Option[]>([{ label: 'Select price range', value: '' }]);
+  const [usageTimingOptions, setUsageTimingOptions] = useState<Option[]>([{ label: 'Select usage timing', value: '' }]);
+
   useEffect(() => {
     fetch(`/api/leads/${id}`)
       .then((res) => res.json())
@@ -73,6 +61,21 @@ export default function LeadDetailPage() {
         setLead(json.data);
         setForm(json.data);
       });
+
+    fetchOptions('/api/admin/master-data?domain=interested_model&active=true', (i) => ({ label: i.label, value: i.code }))
+      .then((opts) => setInterestedModelOptions([{ label: 'Select model', value: '' }, ...opts]));
+
+    fetchOptions('/api/admin/master-data?domain=category&active=true', (i) => ({ label: i.label, value: i.code }))
+      .then((opts) => setCategoryOptions([{ label: 'Select category', value: '' }, ...opts]));
+
+    fetchOptions('/api/admin/master-data?domain=material&active=true', (i) => ({ label: i.label, value: i.code }))
+      .then((opts) => setMaterialOptions([{ label: 'Select material', value: '' }, ...opts]));
+
+    fetchOptions('/api/admin/master-data?domain=price_range&active=true', (i) => ({ label: i.label, value: i.code }))
+      .then((opts) => setPriceRangeOptions([{ label: 'Select price range', value: '' }, ...opts]));
+
+    fetchOptions('/api/admin/master-data?domain=usage_timing&active=true', (i) => ({ label: i.label, value: i.code }))
+      .then((opts) => setUsageTimingOptions([{ label: 'Select usage timing', value: '' }, ...opts]));
   }, [id]);
 
   if (!lead || !form) {
@@ -204,7 +207,7 @@ export default function LeadDetailPage() {
               value={form.status || 'NEW_LEAD'}
               editing={editing}
               onChange={(v) => setField('status', v)}
-              options={statusOptions.map((x) => ({ label: x, value: x }))}
+              options={statusOptions}
             />
 
             <SelectField
@@ -212,7 +215,7 @@ export default function LeadDetailPage() {
               value={form.identityStatus || 'UNVERIFIED'}
               editing={editing}
               onChange={(v) => setField('identityStatus', v)}
-              options={identityStatusOptions.map((x) => ({ label: x, value: x }))}
+              options={identityStatusOptions}
             />
           </div>
         </section>
@@ -320,7 +323,7 @@ function SelectField({
   value: string;
   editing: boolean;
   onChange: (value: string) => void;
-  options: { label: string; value: string }[];
+  options: Option[];
 }) {
   const display = options.find((option) => option.value === value)?.label || value || '-';
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 type NewLeadForm = {
@@ -26,20 +26,9 @@ type NewLeadForm = {
   note: string;
 };
 
-const storeOptions = [
-  { label: 'Select store', value: '' },
-  { label: 'Sofa Plus Bangna', value: 'cmofs9js50004u6f87tkclo9c' },
-  { label: 'Sofa Plus Central Chiang Mai', value: 'cmofs9js50005u6f88m1lja53' },
-];
+type Option = { label: string; value: string };
 
-const salesOptions = [
-  { label: 'Select sales', value: '' },
-  { label: 'Ploy (Bangna)', value: 'SP-S-001' },
-  { label: 'Ton (Bangna)', value: 'SP-S-002' },
-  { label: 'Mint (Chiang Mai)', value: 'SP-S-003' },
-];
-
-const sourceOptions = [
+const sourceOptions: Option[] = [
   { label: 'Select source', value: '' },
   { label: 'Walk-in', value: 'WALK_IN' },
   { label: 'LINE', value: 'LINE' },
@@ -50,51 +39,20 @@ const sourceOptions = [
   { label: 'Other', value: 'OTHER' },
 ];
 
-const interestedModelOptions = [
-  { label: 'Select model', value: '' },
-  { label: 'Jasmine', value: 'Jasmine' },
-  { label: 'Celine', value: 'Celine' },
-  { label: 'Zircon', value: 'Zircon' },
-  { label: 'Other', value: 'Other' },
-];
-
-const categoryOptions = [
-  { label: 'Select category', value: '' },
-  { label: 'Sofa Set', value: 'CAT_SOFA_SET' },
-  { label: 'L-Shape Sofa', value: 'CAT_L_SHAPE' },
-  { label: 'Recliner', value: 'CAT_RECLINER' },
-  { label: 'Sofa Bed', value: 'CAT_SOFA_BED' },
-  { label: 'Other', value: 'CAT_OTHER' },
-];
-
-const materialOptions = [
-  { label: 'Select material', value: '' },
-  { label: 'Fabric', value: 'MAT_FABRIC' },
-  { label: 'Leather', value: 'MAT_LEATHER' },
-  { label: 'PU / Synthetic Leather', value: 'MAT_PU' },
-  { label: 'Other', value: 'MAT_OTHER' },
-];
-
-const priceRangeOptions = [
-  { label: 'Select price range', value: '' },
-  { label: '20,000-40,000 THB', value: 'PR_20_40K' },
-  { label: '40,001-70,000 THB', value: 'PR_40_70K' },
-  { label: '70,001-100,000 THB', value: 'PR_70_100K' },
-  { label: '100,000+ THB', value: 'PR_100K_UP' },
-];
-
-const usageTimingOptions = [
-  { label: 'Select usage timing', value: '' },
-  { label: 'Immediate (0-1 month)', value: 'USE_IMMEDIATE' },
-  { label: 'Within 1-3 months', value: 'USE_1_3M' },
-  { label: 'Within 3-6 months', value: 'USE_3_6M' },
-  { label: 'More than 6 months', value: 'USE_6M_UP' },
-];
-
 function toLocalDateTimeValue(date: Date) {
   const offsetMs = date.getTimezoneOffset() * 60000;
   const local = new Date(date.getTime() - offsetMs);
   return local.toISOString().slice(0, 16);
+}
+
+async function fetchOptions(url: string, mapFn: (item: any) => Option): Promise<Option[]> {
+  try {
+    const res = await fetch(url);
+    const json = await res.json();
+    return json.data?.map(mapFn) ?? [];
+  } catch {
+    return [];
+  }
 }
 
 export default function NewLeadPage() {
@@ -105,7 +63,6 @@ export default function NewLeadPage() {
     phone: '',
     lineId: '',
     residentLocation: '',
-
     interestedModelCode: '',
     categoryCode: '',
     materialCode: '',
@@ -113,7 +70,6 @@ export default function NewLeadPage() {
     priceRangeCode: '',
     usageTimingCode: '',
     onlySofa: null,
-
     visitDatetime: toLocalDateTimeValue(new Date()),
     storeId: '',
     salesId: '',
@@ -122,6 +78,37 @@ export default function NewLeadPage() {
     firstQuestion: '',
     note: '',
   });
+
+  const [storeOptions, setStoreOptions] = useState<Option[]>([{ label: 'Select store', value: '' }]);
+  const [salesOptions, setSalesOptions] = useState<Option[]>([{ label: 'Select sales', value: '' }]);
+  const [interestedModelOptions, setInterestedModelOptions] = useState<Option[]>([{ label: 'Select model', value: '' }]);
+  const [categoryOptions, setCategoryOptions] = useState<Option[]>([{ label: 'Select category', value: '' }]);
+  const [materialOptions, setMaterialOptions] = useState<Option[]>([{ label: 'Select material', value: '' }]);
+  const [priceRangeOptions, setPriceRangeOptions] = useState<Option[]>([{ label: 'Select price range', value: '' }]);
+  const [usageTimingOptions, setUsageTimingOptions] = useState<Option[]>([{ label: 'Select usage timing', value: '' }]);
+
+  useEffect(() => {
+    fetchOptions('/api/admin/stores', (s) => ({ label: s.name, value: s.id }))
+      .then((opts) => setStoreOptions([{ label: 'Select store', value: '' }, ...opts]));
+
+    fetchOptions('/api/admin/sales', (s) => ({ label: s.displayName, value: s.id }))
+      .then((opts) => setSalesOptions([{ label: 'Select sales', value: '' }, ...opts]));
+
+    fetchOptions('/api/admin/master-data?domain=interested_model&active=true', (i) => ({ label: i.label, value: i.code }))
+      .then((opts) => setInterestedModelOptions([{ label: 'Select model', value: '' }, ...opts]));
+
+    fetchOptions('/api/admin/master-data?domain=category&active=true', (i) => ({ label: i.label, value: i.code }))
+      .then((opts) => setCategoryOptions([{ label: 'Select category', value: '' }, ...opts]));
+
+    fetchOptions('/api/admin/master-data?domain=material&active=true', (i) => ({ label: i.label, value: i.code }))
+      .then((opts) => setMaterialOptions([{ label: 'Select material', value: '' }, ...opts]));
+
+    fetchOptions('/api/admin/master-data?domain=price_range&active=true', (i) => ({ label: i.label, value: i.code }))
+      .then((opts) => setPriceRangeOptions([{ label: 'Select price range', value: '' }, ...opts]));
+
+    fetchOptions('/api/admin/master-data?domain=usage_timing&active=true', (i) => ({ label: i.label, value: i.code }))
+      .then((opts) => setUsageTimingOptions([{ label: 'Select usage timing', value: '' }, ...opts]));
+  }, []);
 
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -300,7 +287,7 @@ function SelectInput({
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: { label: string; value: string }[];
+  options: Option[];
 }) {
   return (
     <div>
