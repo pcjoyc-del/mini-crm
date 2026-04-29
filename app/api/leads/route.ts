@@ -132,8 +132,7 @@ export async function POST(req: NextRequest) {
         usageTimingCode: text(body.usageTimingCode),
         onlySofa: bool(body.onlySofa),
 
-        visitPurpose: text(body.visitPurpose),
-        firstQuestion: text(body.firstQuestion),
+      
 
         note: text(body.note),
         status: LeadStatus.NEW_LEAD,
