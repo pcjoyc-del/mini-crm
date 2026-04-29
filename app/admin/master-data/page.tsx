@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 const DOMAINS = [
+  { key: 'channel', label: 'Channel' },
   { key: 'interested_model', label: 'Interested Model' },
   { key: 'category', label: 'Category' },
   { key: 'material', label: 'Material' },

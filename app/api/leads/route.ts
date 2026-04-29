@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LeadSource, LeadStatus } from '@prisma/client';
+import { LeadStatus } from '@prisma/client';
 import { prisma } from '../../../lib/prisma';
 
 function text(value: unknown) {
@@ -14,18 +14,6 @@ function bool(value: unknown) {
   if (value === 'true') return true;
   if (value === 'false') return false;
   return null;
-}
-
-function normalizeSource(value: unknown): LeadSource {
-  const v = text(value);
-
-  if (v === 'Walk-in' || v === 'WALK_IN') return 'WALK_IN' as LeadSource;
-  if (v === 'Line' || v === 'LINE') return 'LINE' as LeadSource;
-  if (v === 'Facebook' || v === 'FACEBOOK') return 'FACEBOOK' as LeadSource;
-  if (v === 'Referral' || v === 'REFERRAL') return 'REFERRAL' as LeadSource;
-  if (v === 'Phone' || v === 'PHONE') return 'PHONE' as LeadSource;
-
-  return 'WALK_IN' as LeadSource;
 }
 
 export async function GET() {
@@ -121,7 +109,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const sourceValue = normalizeSource(body.source);
+    const sourceValue = text(body.source) || '';
 
     const visitDate = body.visitDatetime
       ? new Date(body.visitDatetime)
@@ -145,7 +133,7 @@ export async function POST(req: NextRequest) {
         visitDatetime: visitDate,
         store:     { connect: { id: store.id } },
         sales:     { connect: { id: sales.id } },
-        source: sourceValue,
+        source: sourceValue as any,
 
         note: text(body.note),
         status: 'NEW_LEAD' as LeadStatus,
@@ -158,7 +146,7 @@ export async function POST(req: NextRequest) {
             visitDatetime: visitDate,
             storeId: store.id,
             salesId: sales.id,
-            source: sourceValue,
+            source: sourceValue as any,
             visitPurpose: text(body.visitPurpose),
             firstQuestion: text(body.firstQuestion),
             note: text(body.note),

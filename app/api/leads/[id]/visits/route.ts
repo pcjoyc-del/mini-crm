@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { LeadSource } from '@prisma/client';
 import { prisma } from '../../../../../lib/prisma';
 
 function text(value: unknown) {
@@ -53,7 +52,7 @@ export async function POST(
         visitDatetime: visitDate,
         storeId: body.storeId,
         salesId: sales.id,
-        source: body.source as LeadSource,
+        source: body.source as any,
         visitPurpose: text(body.visitPurpose),
         firstQuestion: text(body.firstQuestion),
         note: text(body.note),
@@ -66,7 +65,7 @@ export async function POST(
         visitDatetime: visitDate,
         storeId: body.storeId,
         salesId: sales.id,
-        source: body.source as LeadSource,
+        source: body.source as any,
         updatedById: adminUser.id,
       },
     });

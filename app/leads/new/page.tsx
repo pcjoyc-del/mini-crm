@@ -28,16 +28,6 @@ type NewLeadForm = {
 
 type Option = { label: string; value: string };
 
-const sourceOptions: Option[] = [
-  { label: 'Select source', value: '' },
-  { label: 'Walk-in', value: 'WALK_IN' },
-  { label: 'LINE', value: 'LINE' },
-  { label: 'Phone Call', value: 'PHONE_CALL' },
-  { label: 'Facebook', value: 'FACEBOOK' },
-  { label: 'Referral', value: 'REFERRAL' },
-  { label: 'Event', value: 'EVENT' },
-  { label: 'Other', value: 'OTHER' },
-];
 
 function toLocalDateTimeValue(date: Date) {
   const offsetMs = date.getTimezoneOffset() * 60000;
@@ -81,6 +71,7 @@ export default function NewLeadPage() {
 
   const [storeOptions, setStoreOptions] = useState<Option[]>([{ label: 'Select store', value: '' }]);
   const [salesOptions, setSalesOptions] = useState<Option[]>([{ label: 'Select sales', value: '' }]);
+  const [channelOptions, setChannelOptions] = useState<Option[]>([{ label: 'Select channel', value: '' }]);
   const [interestedModelOptions, setInterestedModelOptions] = useState<Option[]>([{ label: 'Select model', value: '' }]);
   const [categoryOptions, setCategoryOptions] = useState<Option[]>([{ label: 'Select category', value: '' }]);
   const [materialOptions, setMaterialOptions] = useState<Option[]>([{ label: 'Select material', value: '' }]);
@@ -93,6 +84,9 @@ export default function NewLeadPage() {
 
     fetchOptions('/api/admin/sales', (s) => ({ label: s.displayName, value: s.id }))
       .then((opts) => setSalesOptions([{ label: 'Select sales', value: '' }, ...opts]));
+
+    fetchOptions('/api/admin/master-data?domain=channel&active=true', (i) => ({ label: i.label, value: i.code }))
+      .then((opts) => setChannelOptions([{ label: 'Select channel', value: '' }, ...opts]));
 
     fetchOptions('/api/admin/master-data?domain=interested_model&active=true', (i) => ({ label: i.label, value: i.code }))
       .then((opts) => setInterestedModelOptions([{ label: 'Select model', value: '' }, ...opts]));
@@ -185,7 +179,7 @@ export default function NewLeadPage() {
               <TextInput type="datetime-local" label="Visit Date & Time *" value={form.visitDatetime} onChange={(v) => setField('visitDatetime', v)} />
               <SelectInput label="Store *" value={form.storeId} onChange={(v) => setField('storeId', v)} options={storeOptions} />
               <SelectInput label="Sales *" value={form.salesId} onChange={(v) => setField('salesId', v)} options={salesOptions} />
-              <SelectInput label="Source / Channel *" value={form.source} onChange={(v) => setField('source', v)} options={sourceOptions} />
+              <SelectInput label="Channel *" value={form.source} onChange={(v) => setField('source', v)} options={channelOptions} />
               <TextInput label="Visit Purpose" value={form.visitPurpose} onChange={(v) => setField('visitPurpose', v)} placeholder="เช่น เดินดูสินค้า / ขอราคา / มาดูซ้ำ / ปิดการขาย" />
               <TextInput label="First Question" value={form.firstQuestion} onChange={(v) => setField('firstQuestion', v)} placeholder="คำถามแรกที่ลูกค้าถาม" />
             </div>

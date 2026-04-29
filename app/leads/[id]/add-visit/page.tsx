@@ -15,16 +15,6 @@ type VisitForm = {
 
 type Option = { label: string; value: string };
 
-const sourceOptions: Option[] = [
-  { label: 'Select source', value: '' },
-  { label: 'Walk-in', value: 'WALK_IN' },
-  { label: 'LINE', value: 'LINE' },
-  { label: 'Phone Call', value: 'PHONE_CALL' },
-  { label: 'Facebook', value: 'FACEBOOK' },
-  { label: 'Referral', value: 'REFERRAL' },
-  { label: 'Event', value: 'EVENT' },
-  { label: 'Other', value: 'OTHER' },
-];
 
 function toLocalDateTimeValue(date: Date) {
   const offsetMs = date.getTimezoneOffset() * 60000;
@@ -49,6 +39,7 @@ export default function AddVisitPage() {
 
   const [storeOptions, setStoreOptions] = useState<Option[]>([{ label: 'Select store', value: '' }]);
   const [salesOptions, setSalesOptions] = useState<Option[]>([{ label: 'Select sales', value: '' }]);
+  const [channelOptions, setChannelOptions] = useState<Option[]>([{ label: 'Select channel', value: '' }]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -59,6 +50,15 @@ export default function AddVisitPage() {
         setStoreOptions([
           { label: 'Select store', value: '' },
           ...(json.data || []).map((s: any) => ({ label: s.name, value: s.id })),
+        ])
+      );
+
+    fetch('/api/admin/master-data?domain=channel&active=true')
+      .then((r) => r.json())
+      .then((json) =>
+        setChannelOptions([
+          { label: 'Select channel', value: '' },
+          ...(json.data || []).map((i: any) => ({ label: i.label, value: i.code })),
         ])
       );
 
@@ -130,7 +130,7 @@ export default function AddVisitPage() {
               <TextInput type="datetime-local" label="Visit Date & Time *" value={form.visitDatetime} onChange={(v) => setField('visitDatetime', v)} />
               <SelectInput label="Store *" value={form.storeId} onChange={(v) => setField('storeId', v)} options={storeOptions} />
               <SelectInput label="Sales *" value={form.salesId} onChange={(v) => setField('salesId', v)} options={salesOptions} />
-              <SelectInput label="Source / Channel *" value={form.source} onChange={(v) => setField('source', v)} options={sourceOptions} />
+              <SelectInput label="Channel *" value={form.source} onChange={(v) => setField('source', v)} options={channelOptions} />
               <TextInput label="Visit Purpose" value={form.visitPurpose} onChange={(v) => setField('visitPurpose', v)} placeholder="เช่น มาดูซ้ำ / ขอราคา / ตัดสินใจซื้อ" />
               <TextInput label="First Question" value={form.firstQuestion} onChange={(v) => setField('firstQuestion', v)} placeholder="คำถามแรกที่ลูกค้าถามใน visit นี้" />
             </div>

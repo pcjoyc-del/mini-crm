@@ -30,15 +30,6 @@ enum IdentityStatus {
   CONFLICT
 }
 
-enum LeadSource {
-  WALK_IN
-  LINE
-  PHONE_CALL
-  FACEBOOK
-  REFERRAL
-  EVENT
-  OTHER
-}
 
 enum DuplicateCaseStatus {
   OPEN
@@ -211,7 +202,7 @@ model Lead {
   salesOrderNo                  String?
   phone                         String?        @db.VarChar(50)
   lineId                        String?        @db.VarChar(80)
-  source                        LeadSource
+  source                        String
   interestedModelCode           String?        @db.VarChar(80)
   priceRangeCode                String?        @db.VarChar(80)
   usageTimingCode               String?        @db.VarChar(80)
@@ -449,7 +440,7 @@ model LeadVisit {
   salesId String
   sales   SalesUser @relation(fields: [salesId], references: [id])
 
-  source LeadSource
+  source String
 
   note String?
 
