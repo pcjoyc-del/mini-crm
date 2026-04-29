@@ -41,6 +41,12 @@ export async function POST(
 
     if (!sales) return badRequest('salesId is invalid');
 
+    const adminUser = await prisma.user.findFirst({
+      where: { email: 'admin@sofaplus.co.th' },
+    });
+
+    if (!adminUser) return badRequest('Admin user not found — run seed-auth-users script first');
+
     const visit = await prisma.leadVisit.create({
       data: {
         leadId: id,
@@ -61,7 +67,7 @@ export async function POST(
         storeId: body.storeId,
         salesId: sales.id,
         source: body.source as LeadSource,
-        updatedById: 'cmofs9jrv0001u6f81flnrfii',
+        updatedById: adminUser.id,
       },
     });
 
