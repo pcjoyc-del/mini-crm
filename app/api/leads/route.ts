@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { IdentityStatus, LeadSource, LeadStatus } from '@prisma/client';
+import { LeadSource, LeadStatus } from '@prisma/client';
 import { prisma } from '../../../lib/prisma';
-import { SESSION_COOKIE_NAME, verifySessionToken } from '../../../lib/auth';
 
 function text(value: unknown) {
   if (typeof value !== 'string') return null;
@@ -12,63 +11,58 @@ function text(value: unknown) {
 function bool(value: unknown) {
   if (value === true) return true;
   if (value === false) return false;
+  if (value === 'true') return true;
+  if (value === 'false') return false;
   return null;
 }
 
-function getUser(req: NextRequest) {
-  const token = req.cookies.get(SESSION_COOKIE_NAME)?.value;
-  return verifySessionToken(token);
+function normalizeSource(value: unknown): LeadSource {
+  const v = text(value);
+
+  if (v === 'Walk-in' || v === 'WALK_IN') return 'WALK_IN' as LeadSource;
+  if (v === 'Line' || v === 'LINE') return 'LINE' as LeadSource;
+  if (v === 'Facebook' || v === 'FACEBOOK') return 'FACEBOOK' as LeadSource;
+  if (v === 'Referral' || v === 'REFERRAL') return 'REFERRAL' as LeadSource;
+  if (v === 'Phone' || v === 'PHONE') return 'PHONE' as LeadSource;
+
+  return 'WALK_IN' as LeadSource;
 }
 
-function badRequest(message: string) {
-  return NextResponse.json(
-    { error: { code: 'VALIDATION_ERROR', message } },
-    { status: 400 }
-  );
-}
-
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    const user = getUser(req);
-
-    if (!user) {
-      return NextResponse.json(
-        { error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-        { status: 401 }
-      );
-    }
-
-    const where =
-      user.role === 'ADMIN' || user.role === 'MANAGER'
-        ? {}
-        : {
-            sales: {
-              userId: user.id,
-            },
-          };
-
     const leads = await prisma.lead.findMany({
-      where,
+      where: {
+        status: {
+          not: 'WON' as LeadStatus,
+        },
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
       include: {
-        store: { select: { id: true, name: true } },
-        sales: { select: { id: true, displayName: true, userId: true } },
+        store: true,
+        sales: true,
         visits: {
           orderBy: { visitDatetime: 'desc' },
           include: {
-            store: { select: { id: true, name: true } },
-            sales: { select: { id: true, displayName: true, userId: true } },
+            store: true,
+            sales: true,
           },
         },
       },
-      orderBy: { visitDatetime: 'desc' },
-      take: 100,
     });
 
     return NextResponse.json({ data: leads });
   } catch (error) {
     console.error('GET /api/leads failed:', error);
+
     return NextResponse.json(
-      { error: { code: 'INTERNAL_SERVER_ERROR', message: 'Failed to fetch leads' } },
+      {
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to fetch leads',
+        },
+      },
       { status: 500 }
     );
   }
@@ -76,41 +70,62 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const user = getUser(req);
-
-    if (!user) {
-      return NextResponse.json(
-        { error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
-        { status: 401 }
-      );
-    }
-
     const body = await req.json();
 
-    if (!body.visitDatetime) return badRequest('visitDatetime is required');
-    if (!body.storeId) return badRequest('storeId is required');
-    if (!body.salesId) return badRequest('salesId is required');
-    if (!body.source) return badRequest('source is required');
+    const store = body.storeId
+      ? await prisma.store.findFirst({
+          where: {
+            OR: [{ id: body.storeId }, { name: body.storeId }],
+          },
+        })
+      : await prisma.store.findFirst({
+          where: {
+            name: text(body.store) || text(body.storeName) || '',
+          },
+        });
 
-    const visitDate = new Date(body.visitDatetime);
-    if (Number.isNaN(visitDate.getTime())) {
-      return badRequest('visitDatetime is invalid');
-    }
+    const sales = body.salesId
+      ? await prisma.salesUser.findFirst({
+          where: {
+            OR: [{ id: body.salesId }, { displayName: body.salesId }],
+          },
+        })
+      : await prisma.salesUser.findFirst({
+          where: {
+            displayName: text(body.sales) || text(body.salesName) || '',
+          },
+        });
 
-    const sales = await prisma.salesUser.findFirst({
-      where: {
-        OR: [{ id: body.salesId }, { employeeCode: body.salesId }],
-      },
-    });
-
-    if (!sales) return badRequest('salesId is invalid');
-
-    if (user.role === 'SALES' && sales.userId !== user.id) {
+    if (!store) {
       return NextResponse.json(
-        { error: { code: 'FORBIDDEN', message: 'Sales can create only own leads' } },
-        { status: 403 }
+        { error: { code: 'STORE_NOT_FOUND', message: 'storeId is invalid' } },
+        { status: 400 }
       );
     }
+
+    if (!sales) {
+      return NextResponse.json(
+        { error: { code: 'SALES_NOT_FOUND', message: 'salesId is invalid' } },
+        { status: 400 }
+      );
+    }
+
+    const adminUser = await prisma.user.findFirst({
+      where: { email: 'admin@sofaplus.co.th' },
+    });
+
+    if (!adminUser) {
+      return NextResponse.json(
+        { error: { code: 'ADMIN_NOT_FOUND', message: 'Admin user not found' } },
+        { status: 400 }
+      );
+    }
+
+    const sourceValue = normalizeSource(body.source);
+
+    const visitDate = body.visitDatetime
+      ? new Date(body.visitDatetime)
+      : new Date();
 
     const lead = await prisma.lead.create({
       data: {
@@ -118,11 +133,6 @@ export async function POST(req: NextRequest) {
         phone: text(body.phone),
         lineId: text(body.lineId),
         residentLocation: text(body.residentLocation),
-
-        visitDatetime: visitDate,
-        storeId: body.storeId,
-        salesId: sales.id,
-        source: body.source as LeadSource,
 
         interestedModelCode: text(body.interestedModelCode),
         categoryCode: text(body.categoryCode),
@@ -132,21 +142,22 @@ export async function POST(req: NextRequest) {
         usageTimingCode: text(body.usageTimingCode),
         onlySofa: bool(body.onlySofa),
 
-      
+        storeId: store.id,
+        salesId: sales.id,
+        source: sourceValue,
 
         note: text(body.note),
-        status: LeadStatus.NEW_LEAD,
-        identityStatus: IdentityStatus.UNVERIFIED,
+        status: 'NEW_LEAD' as LeadStatus,
 
-        createdById: user.id,
-        updatedById: user.id,
+        createdById: adminUser.id,
+        updatedById: adminUser.id,
 
         visits: {
           create: {
             visitDatetime: visitDate,
-            storeId: body.storeId,
+            storeId: store.id,
             salesId: sales.id,
-            source: body.source as LeadSource,
+            source: sourceValue,
             visitPurpose: text(body.visitPurpose),
             firstQuestion: text(body.firstQuestion),
             note: text(body.note),
@@ -158,7 +169,10 @@ export async function POST(req: NextRequest) {
         sales: true,
         visits: {
           orderBy: { visitDatetime: 'desc' },
-          include: { store: true, sales: true },
+          include: {
+            store: true,
+            sales: true,
+          },
         },
       },
     });
@@ -166,8 +180,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ data: lead }, { status: 201 });
   } catch (error) {
     console.error('POST /api/leads failed:', error);
+
     return NextResponse.json(
-      { error: { code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create lead' } },
+      {
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create lead',
+        },
+      },
       { status: 500 }
     );
   }
