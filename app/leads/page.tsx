@@ -96,6 +96,13 @@ export default function LeadListPage() {
           </button>
 
           <button
+            onClick={() => router.push('/admin')}
+            className="border border-[#7b4f2f] text-[#7b4f2f] px-4 py-2 rounded text-xs"
+          >
+            Admin
+          </button>
+
+          <button
             onClick={() => router.push('/leads/new')}
             className="bg-[#7b4f2f] text-white px-4 py-2 rounded text-xs"
           >
