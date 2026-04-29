@@ -1,0 +1,457 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  SUPERVISOR
+  SALES
+}
+
+enum LeadStatus {
+  NEW_LEAD
+  FOLLOW_UP
+  NEGOTIATING
+  WON
+  LOST
+  CLOSED
+}
+
+enum IdentityStatus {
+  UNVERIFIED
+  PARTIAL_MATCH
+  VERIFIED
+  CONFLICT
+}
+
+enum LeadSource {
+  WALK_IN
+  LINE
+  PHONE_CALL
+  FACEBOOK
+  REFERRAL
+  EVENT
+  OTHER
+}
+
+enum DuplicateCaseStatus {
+  OPEN
+  IN_REVIEW
+  MERGED
+  DISMISSED
+}
+
+enum DuplicateSignal {
+  PHONE_EXACT
+  LINE_EXACT
+  NAME_PHONE_SIMILAR
+  MANUAL_FLAG
+}
+
+enum MergeRequestStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  APPLIED
+  REVERSED
+}
+
+enum MergeActionType {
+  MERGE
+  UNMERGE
+}
+
+enum MergeReason {
+  DUPLICATE
+  DATA_CORRECTION
+  USER_REQUEST
+}
+
+enum CustomerStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum OrderStatus {
+  DRAFT
+  CONFIRMED
+  FULFILLED
+  CANCELLED
+}
+
+enum AuditEntityType {
+  LEAD
+  LEAD_STATUS_HISTORY
+  CUSTOMER
+  LEAD_CUSTOMER_MAP
+  DUPLICATE_CASE
+  MERGE_REQUEST
+  MERGE_ACTION
+  ORDER
+  MASTER_DATA
+  AUTH
+}
+
+enum AuditActionType {
+  CREATE
+  UPDATE
+  DELETE
+  STATUS_CHANGE
+  SUBMIT
+  APPROVE
+  REJECT
+  MERGE
+  UNMERGE
+  LOGIN
+  LOGOUT
+}
+
+enum LeadLifecycleStatus {
+  LEAD
+  CUSTOMER
+  LOST
+}
+
+enum FollowUpTemperature {
+  HOT
+  WARM
+  COLD
+  UNKNOWN
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  fullName     String
+  role         UserRole
+  isActive     Boolean  @default(true)
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  salesProfile      SalesUser?
+  createdLeads      Lead[]              @relation("LeadCreatedBy")
+  updatedLeads      Lead[]              @relation("LeadUpdatedBy")
+  statusChanges     LeadStatusHistory[] @relation("LeadStatusChangedBy")
+  duplicateCases    DuplicateCase[]     @relation("DuplicateCaseCreatedBy")
+  mergeRequests     MergeRequest[]      @relation("MergeRequestCreatedBy")
+  reviewedMergeReqs MergeRequest[]      @relation("MergeRequestReviewedBy")
+  mergeActions      MergeAction[]       @relation("MergeActionPerformedBy")
+  leadCustomerMaps  LeadCustomerMap[]   @relation("LeadCustomerMapMappedBy")
+  auditEvents       AuditEvent[]        @relation("AuditEventActor")
+}
+
+model Store {
+  id        String   @id @default(cuid())
+  code      String   @unique @db.VarChar(40)
+  name      String   @db.VarChar(120)
+  region    String?  @db.VarChar(120)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leads      Lead[]
+  leadVisits LeadVisit[]
+  salesUsers SalesUser[]
+
+  @@index([isActive, name])
+}
+
+model SalesUser {
+  id           String      @id @default(cuid())
+  employeeCode String      @unique @db.VarChar(40)
+  displayName  String      @db.VarChar(120)
+  userId       String?     @unique
+  storeId      String?
+  isActive     Boolean     @default(true)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  leadVisits   LeadVisit[]
+  user         User?       @relation(fields: [userId], references: [id])
+  store        Store?      @relation(fields: [storeId], references: [id])
+  leads        Lead[]
+
+  @@index([storeId, isActive])
+}
+
+model MasterDataItem {
+  id        String   @id @default(cuid())
+  domain    String   @db.VarChar(80)
+  code      String   @db.VarChar(80)
+  label     String   @db.VarChar(255)
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  metadata  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([domain, code])
+  @@index([domain, isActive, sortOrder])
+}
+
+model Lead {
+  id                            String         @id @default(cuid())
+  visitDatetime                 DateTime
+  storeId                       String
+  salesId                       String
+  leadName                      String?
+  categoryCode                  String?
+  materialCode                  String?
+  sizeText                      String?
+  onlySofa                      Boolean?
+  residentLocation              String?
+  customerName                  String?        @db.VarChar(255)
+  salesOrderNo                  String?
+  phone                         String?        @db.VarChar(50)
+  lineId                        String?        @db.VarChar(80)
+  source                        LeadSource
+  interestedModelCode           String?        @db.VarChar(80)
+  priceRangeCode                String?        @db.VarChar(80)
+  usageTimingCode               String?        @db.VarChar(80)
+  residenceTypeCode             String?        @db.VarChar(80)
+  customerGroupCode             String?        @db.VarChar(80)
+  ageRangeCode                  String?        @db.VarChar(80)
+  customerLocation              String?        @db.VarChar(255)
+  firstQuestion                 String?
+  customerTypeFlagCode          String?        @db.VarChar(80)
+  interestedProductCategoryCode String?        @db.VarChar(80)
+  note                          String?
+  status                        LeadStatus     @default(NEW_LEAD)
+  identityStatus                IdentityStatus @default(UNVERIFIED)
+  createdById                   String
+  updatedById                   String
+  createdAt                     DateTime       @default(now())
+  updatedAt                     DateTime       @updatedAt
+
+  store               Store                      @relation(fields: [storeId], references: [id])
+  sales               SalesUser                  @relation(fields: [salesId], references: [id])
+  createdBy           User                       @relation("LeadCreatedBy", fields: [createdById], references: [id])
+  updatedBy           User                       @relation("LeadUpdatedBy", fields: [updatedById], references: [id])
+  statusHistory       LeadStatusHistory[]
+  leadCustomerMaps    LeadCustomerMap[]
+  duplicateCaseLinks  DuplicateCaseLead[]
+  primaryInMerges     MergeAction[]              @relation("MergePrimaryLead")
+  secondaryInMerges   MergeActionSecondaryLead[]
+  orders              Order[]
+  visits              LeadVisit[]
+  lifecycleStatus     LeadLifecycleStatus        @default(LEAD)
+  followUpTemperature FollowUpTemperature        @default(UNKNOWN)
+
+  @@index([visitDatetime])
+  @@index([storeId, visitDatetime])
+  @@index([salesId, visitDatetime])
+  @@index([status, createdAt])
+  @@index([identityStatus, createdAt])
+  @@index([phone])
+  @@index([lineId])
+  @@index([createdAt])
+}
+
+model LeadStatusHistory {
+  id           String      @id @default(cuid())
+  leadId       String
+  fromStatus   LeadStatus?
+  toStatus     LeadStatus
+  changedById  String
+  changeReason String?
+  changedAt    DateTime    @default(now())
+
+  lead      Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  changedBy User @relation("LeadStatusChangedBy", fields: [changedById], references: [id])
+
+  @@index([leadId, changedAt])
+  @@index([toStatus, changedAt])
+}
+
+model Customer {
+  id                 String         @id @default(cuid())
+  displayName        String         @db.VarChar(255)
+  primaryPhone       String?        @db.VarChar(50)
+  primaryLineId      String?        @db.VarChar(80)
+  status             CustomerStatus @default(ACTIVE)
+  identityConfidence Decimal?       @db.Decimal(5, 2)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  leadLinks LeadCustomerMap[]
+  orders    Order[]
+
+  @@index([displayName])
+  @@index([primaryPhone])
+  @@index([primaryLineId])
+}
+
+model LeadCustomerMap {
+  id                String         @id @default(cuid())
+  leadId            String
+  customerId        String
+  identityStatus    IdentityStatus
+  confidenceScore   Decimal?       @db.Decimal(5, 2)
+  isPrimaryIdentity Boolean        @default(false)
+  mappedAt          DateTime       @default(now())
+  mappedByUserId    String?
+
+  lead         Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  mappedByUser User?    @relation("LeadCustomerMapMappedBy", fields: [mappedByUserId], references: [id])
+
+  @@unique([leadId, customerId])
+  @@index([customerId, mappedAt])
+  @@index([identityStatus, mappedAt])
+}
+
+model DuplicateCase {
+  id              String              @id @default(cuid())
+  status          DuplicateCaseStatus @default(OPEN)
+  signal          DuplicateSignal
+  confidenceScore Decimal?            @db.Decimal(5, 2)
+  createdByUserId String
+  resolvedAt      DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  createdBy    User                @relation("DuplicateCaseCreatedBy", fields: [createdByUserId], references: [id])
+  leads        DuplicateCaseLead[]
+  mergeRequest MergeRequest?
+
+  @@index([status, createdAt])
+  @@index([signal])
+}
+
+model DuplicateCaseLead {
+  duplicateCaseId String
+  leadId          String
+  isPrimaryHint   Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  duplicateCase DuplicateCase @relation(fields: [duplicateCaseId], references: [id], onDelete: Cascade)
+  lead          Lead          @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@id([duplicateCaseId, leadId])
+  @@index([leadId])
+}
+
+model MergeRequest {
+  id               String             @id @default(cuid())
+  duplicateCaseId  String             @unique
+  status           MergeRequestStatus @default(DRAFT)
+  reason           MergeReason
+  primaryLeadId    String
+  comment          String?
+  createdByUserId  String
+  reviewedByUserId String?
+  submittedAt      DateTime?
+  decidedAt        DateTime?
+  appliedAt        DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  duplicateCase DuplicateCase @relation(fields: [duplicateCaseId], references: [id])
+  createdBy     User          @relation("MergeRequestCreatedBy", fields: [createdByUserId], references: [id])
+  reviewedBy    User?         @relation("MergeRequestReviewedBy", fields: [reviewedByUserId], references: [id])
+  actions       MergeAction[]
+
+  @@index([status, createdAt])
+  @@index([primaryLeadId])
+}
+
+model MergeAction {
+  id                String          @id @default(cuid())
+  mergeRequestId    String
+  actionType        MergeActionType
+  primaryLeadId     String
+  performedByUserId String
+  reason            MergeReason
+  payloadBefore     Json
+  payloadAfter      Json
+  performedAt       DateTime        @default(now())
+
+  mergeRequest   MergeRequest               @relation(fields: [mergeRequestId], references: [id], onDelete: Cascade)
+  primaryLead    Lead                       @relation("MergePrimaryLead", fields: [primaryLeadId], references: [id])
+  performedBy    User                       @relation("MergeActionPerformedBy", fields: [performedByUserId], references: [id])
+  secondaryLinks MergeActionSecondaryLead[]
+
+  @@index([mergeRequestId, performedAt])
+  @@index([actionType, performedAt])
+}
+
+model MergeActionSecondaryLead {
+  mergeActionId String
+  leadId        String
+
+  mergeAction MergeAction @relation(fields: [mergeActionId], references: [id], onDelete: Cascade)
+  lead        Lead        @relation(fields: [leadId], references: [id])
+
+  @@id([mergeActionId, leadId])
+  @@index([leadId])
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  orderNumber    String      @unique
+  leadId         String
+  customerId     String?
+  status         OrderStatus @default(DRAFT)
+  currencyCode   String      @db.Char(3)
+  subtotalAmount Decimal     @db.Decimal(14, 2)
+  taxAmount      Decimal     @default(0) @db.Decimal(14, 2)
+  totalAmount    Decimal     @db.Decimal(14, 2)
+  orderedAt      DateTime?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  lead     Lead      @relation(fields: [leadId], references: [id])
+  customer Customer? @relation(fields: [customerId], references: [id])
+
+  @@index([leadId, createdAt])
+  @@index([customerId, createdAt])
+  @@index([status, createdAt])
+}
+
+model AuditEvent {
+  id          String          @id @default(cuid())
+  entityType  AuditEntityType
+  entityId    String
+  actionType  AuditActionType
+  actorUserId String?
+  requestId   String?
+  beforeState Json?
+  afterState  Json?
+  metadata    Json?
+  createdAt   DateTime        @default(now())
+
+  actor User? @relation("AuditEventActor", fields: [actorUserId], references: [id])
+
+  @@index([entityType, entityId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([actionType, createdAt])
+}
+
+model LeadVisit {
+  id String @id @default(cuid())
+
+  leadId        String
+  lead          Lead     @relation(fields: [leadId], references: [id])
+  visitPurpose  String?
+  firstQuestion String?
+  visitDatetime DateTime
+
+  storeId String
+  store   Store  @relation(fields: [storeId], references: [id])
+
+  salesId String
+  sales   SalesUser @relation(fields: [salesId], references: [id])
+
+  source LeadSource
+
+  note String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

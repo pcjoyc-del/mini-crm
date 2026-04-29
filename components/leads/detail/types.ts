@@ -1,0 +1,60 @@
+export type LeadDetail = {
+  id: string;
+  visitDatetime: string;
+  storeId: string;
+  salesId: string;
+  source: string;
+  customerName: string | null;
+  phone: string | null;
+  lineId: string | null;
+  interestedModelCode: string | null;
+  priceRangeCode: string | null;
+  usageTimingCode: string | null;
+  residenceTypeCode: string | null;
+  customerGroupCode: string | null;
+  ageRangeCode: string | null;
+  customerLocation: string | null;
+  firstQuestion: string | null;
+  customerTypeFlagCode: string | null;
+  interestedProductCategoryCode: string | null;
+  note: string | null;
+  status: 'NEW_LEAD' | 'FOLLOW_UP' | 'NEGOTIATING' | 'WON' | 'LOST' | 'CLOSED';
+  identityStatus: 'UNVERIFIED' | 'PARTIAL_MATCH' | 'VERIFIED' | 'CONFLICT';
+  createdAt: string;
+  updatedAt: string;
+  statusHistory: Array<{
+    id: string;
+    fromStatus: string | null;
+    toStatus: string;
+    changeReason: string | null;
+    changedAt: string;
+    changedById: string;
+  }>;
+  identityLinks: Array<{
+    id: string;
+    customerId: string;
+    identityStatus: string;
+    confidenceScore: string | null;
+    isPrimaryIdentity: boolean;
+    mappedAt: string;
+    mappedByUserId: string | null;
+  }>;
+};
+
+export type EditLeadForm = {
+  status: string;
+  note: string;
+  phone: string;
+  lineId: string;
+  customerName: string;
+  interestedModelCode: string;
+  priceRangeCode: string;
+  usageTimingCode: string;
+  residenceTypeCode: string;
+  customerGroupCode: string;
+  ageRangeCode: string;
+  customerLocation: string;
+  firstQuestion: string;
+  customerTypeFlagCode: string;
+  interestedProductCategoryCode: string;
+};
