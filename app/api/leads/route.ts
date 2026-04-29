@@ -142,15 +142,16 @@ export async function POST(req: NextRequest) {
         usageTimingCode: text(body.usageTimingCode),
         onlySofa: bool(body.onlySofa),
 
-        storeId: store.id,
-        salesId: sales.id,
+        visitDatetime: visitDate,
+        store:     { connect: { id: store.id } },
+        sales:     { connect: { id: sales.id } },
         source: sourceValue,
 
         note: text(body.note),
         status: 'NEW_LEAD' as LeadStatus,
 
-        createdById: adminUser.id,
-        updatedById: adminUser.id,
+        createdBy: { connect: { id: adminUser.id } },
+        updatedBy: { connect: { id: adminUser.id } },
 
         visits: {
           create: {
