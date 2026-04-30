@@ -48,9 +48,9 @@ export default function LeadDetailPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  const [interestedModelOptions, setInterestedModelOptions] = useState<Option[]>([]);
-  const [categoryOptions, setCategoryOptions] = useState<Option[]>([]);
-  const [materialOptions, setMaterialOptions] = useState<Option[]>([]);
+  const [interestedModelOptions, setInterestedModelOptions] = useState<Option[] | null>(null);
+  const [categoryOptions, setCategoryOptions] = useState<Option[] | null>(null);
+  const [materialOptions, setMaterialOptions] = useState<Option[] | null>(null);
   const [priceRangeOptions, setPriceRangeOptions] = useState<Option[]>([{ label: 'Select price range', value: '' }]);
   const [usageTimingOptions, setUsageTimingOptions] = useState<Option[]>([{ label: 'Select usage timing', value: '' }]);
 
@@ -371,7 +371,7 @@ function MultiSelectField({
   values: string[];
   editing: boolean;
   onChange: (values: string[]) => void;
-  options: Option[];
+  options: Option[] | null;
 }) {
   const toggle = (code: string) => {
     if (values.includes(code)) {
@@ -382,7 +382,7 @@ function MultiSelectField({
   };
 
   const displayLabels = values
-    .map((v) => options.find((o) => o.value === v)?.label ?? v)
+    .map((v) => (options ?? []).find((o) => o.value === v)?.label ?? v)
     .join(', ');
 
   return (
@@ -391,8 +391,11 @@ function MultiSelectField({
 
       {editing ? (
         <div className="mt-2 flex flex-wrap gap-2">
-          {options.length === 0 && <span className="text-sm text-stone-400">Loading...</span>}
-          {options.map((opt) => (
+          {options === null && <span className="text-sm text-stone-400">Loading...</span>}
+          {options !== null && options.length === 0 && (
+            <span className="text-sm text-stone-400">ยังไม่มีข้อมูล — กรุณาเพิ่มที่ Admin → Master Data</span>
+          )}
+          {(options ?? []).map((opt) => (
             <button
               key={opt.value}
               type="button"
