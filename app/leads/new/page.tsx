@@ -187,7 +187,7 @@ export default function NewLeadPage() {
             <h2 className="mb-4 text-xl font-bold text-stone-700">Qualification</h2>
 
             <div className="space-y-4">
-              <MultiSelectInput label="Interested Model" values={form.interestedModelCodes} onChange={(v) => setField('interestedModelCodes', v)} options={interestedModelOptions} />
+              <ModelPickerInput values={form.interestedModelCodes} onChange={(v) => setField('interestedModelCodes', v)} options={interestedModelOptions} />
               <MultiSelectInput label="Category" values={form.categoryCodes} onChange={(v) => setField('categoryCodes', v)} options={categoryOptions} />
               <MultiSelectInput label="Material" values={form.materialCodes} onChange={(v) => setField('materialCodes', v)} options={materialOptions} />
               <div className="grid gap-4 md:grid-cols-2">
@@ -328,6 +328,89 @@ function MultiSelectInput({
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+function ModelPickerInput({
+  values,
+  onChange,
+  options,
+  max = 5,
+}: {
+  values: string[];
+  onChange: (values: string[]) => void;
+  options: Option[] | null;
+  max?: number;
+}) {
+  const selected = values
+    .map((v) => options?.find((o) => o.value === v))
+    .filter(Boolean) as Option[];
+  const available = (options ?? []).filter((o) => !values.includes(o.value));
+  const canAdd = values.length < max;
+
+  const add = (code: string) => {
+    if (code && !values.includes(code) && values.length < max) {
+      onChange([...values, code]);
+    }
+  };
+
+  const remove = (code: string) => {
+    onChange(values.filter((v) => v !== code));
+  };
+
+  return (
+    <div>
+      <label className="font-semibold">
+        Interested Model{' '}
+        <span className="text-xs font-normal text-stone-400">(สูงสุด {max} รายการ)</span>
+      </label>
+
+      {selected.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {selected.map((opt) => (
+            <span
+              key={opt.value}
+              className="flex items-center gap-1.5 rounded-xl bg-[#6f4e37] px-3 py-1.5 text-sm font-medium text-white"
+            >
+              {opt.label}
+              <button
+                type="button"
+                onClick={() => remove(opt.value)}
+                className="opacity-70 hover:opacity-100"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {canAdd && (
+        <select
+          className="mt-2 w-full rounded-xl border px-4 py-3 text-sm text-stone-500"
+          value=""
+          onChange={(e) => add(e.target.value)}
+          disabled={options === null}
+        >
+          <option value="">
+            {options === null
+              ? 'Loading...'
+              : available.length === 0
+              ? 'ไม่มีรายการเพิ่มเติม'
+              : '+ เลือก Model...'}
+          </option>
+          {available.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {!canAdd && (
+        <p className="mt-1 text-xs text-stone-400">เลือกครบ {max} รายการแล้ว</p>
+      )}
     </div>
   );
 }

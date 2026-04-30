@@ -233,7 +233,7 @@ export default function LeadDetailPage() {
           <h2 className="mb-4 text-lg font-bold text-stone-700">Qualification</h2>
 
           <div className="space-y-4">
-            <MultiSelectField label="Interested Model" values={form.interestedModelCodes ?? []} editing={editing} onChange={(v) => setField('interestedModelCodes', v)} options={interestedModelOptions} />
+            <ModelPickerField values={form.interestedModelCodes ?? []} editing={editing} onChange={(v) => setField('interestedModelCodes', v)} options={interestedModelOptions} />
             <MultiSelectField label="Category" values={form.categoryCodes ?? []} editing={editing} onChange={(v) => setField('categoryCodes', v)} options={categoryOptions} />
             <MultiSelectField label="Material" values={form.materialCodes ?? []} editing={editing} onChange={(v) => setField('materialCodes', v)} options={materialOptions} />
             <div className="grid gap-4 md:grid-cols-2">
@@ -410,6 +410,99 @@ function MultiSelectField({
             </button>
           ))}
         </div>
+      ) : (
+        <div className="mt-1 text-sm text-stone-900">{displayLabels || '-'}</div>
+      )}
+    </div>
+  );
+}
+
+function ModelPickerField({
+  values,
+  editing,
+  onChange,
+  options,
+  max = 5,
+}: {
+  values: string[];
+  editing: boolean;
+  onChange: (values: string[]) => void;
+  options: Option[] | null;
+  max?: number;
+}) {
+  const selected = values
+    .map((v) => options?.find((o) => o.value === v))
+    .filter(Boolean) as Option[];
+  const available = (options ?? []).filter((o) => !values.includes(o.value));
+  const canAdd = values.length < max;
+
+  const add = (code: string) => {
+    if (code && !values.includes(code) && values.length < max) {
+      onChange([...values, code]);
+    }
+  };
+
+  const remove = (code: string) => {
+    onChange(values.filter((v) => v !== code));
+  };
+
+  const displayLabels = selected.map((o) => o.label).join(', ');
+
+  return (
+    <div className="rounded-xl border bg-stone-50 p-4">
+      <div className="text-xs font-semibold uppercase text-stone-500">
+        Interested Model
+        {editing && <span className="ml-1 font-normal normal-case text-stone-400">(สูงสุด {max} รายการ)</span>}
+      </div>
+
+      {editing ? (
+        <>
+          {selected.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {selected.map((opt) => (
+                <span
+                  key={opt.value}
+                  className="flex items-center gap-1.5 rounded-xl bg-[#6f4e37] px-3 py-1.5 text-sm font-medium text-white"
+                >
+                  {opt.label}
+                  <button
+                    type="button"
+                    onClick={() => remove(opt.value)}
+                    className="opacity-70 hover:opacity-100"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {canAdd && (
+            <select
+              className="mt-2 w-full rounded-lg border bg-white px-3 py-2 text-sm text-stone-500"
+              value=""
+              onChange={(e) => add(e.target.value)}
+              disabled={options === null}
+            >
+              <option value="">
+                {options === null
+                  ? 'Loading...'
+                  : available.length === 0
+                  ? 'ไม่มีรายการเพิ่มเติม'
+                  : '+ เลือก Model...'}
+              </option>
+              {available.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {!canAdd && (
+            <p className="mt-1 text-xs text-stone-400">เลือกครบ {max} รายการแล้ว</p>
+          )}
+        </>
       ) : (
         <div className="mt-1 text-sm text-stone-900">{displayLabels || '-'}</div>
       )}
