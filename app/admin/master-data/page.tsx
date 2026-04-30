@@ -33,6 +33,9 @@ export default function MasterDataPage() {
   const [newLabel, setNewLabel] = useState('');
   const [newSort, setNewSort] = useState('');
   const [error, setError] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editLabel, setEditLabel] = useState('');
+  const [editSort, setEditSort] = useState('');
 
   const load = async (domain: string) => {
     setLoading(true);
@@ -71,6 +74,22 @@ export default function MasterDataPage() {
       const json = await res.json();
       setError(json.error?.message || 'Failed to add item');
     }
+  };
+
+  const startEdit = (item: MasterItem) => {
+    setEditingId(item.id);
+    setEditLabel(item.label);
+    setEditSort(String(item.sortOrder));
+  };
+
+  const saveEdit = async (id: string) => {
+    await fetch(`/api/admin/master-data/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ label: editLabel.trim(), sortOrder: parseInt(editSort) || 0 }),
+    });
+    setEditingId(null);
+    load(activeDomain);
   };
 
   const toggleActive = async (item: MasterItem) => {
@@ -139,33 +158,80 @@ export default function MasterDataPage() {
                 </tr>
               </thead>
               <tbody>
-                {items.map((item) => (
-                  <tr key={item.id} className="border-b last:border-0">
-                    <td className="py-3 pr-4 font-mono text-xs text-stone-600">{item.code}</td>
-                    <td className="py-3 pr-4">{item.label}</td>
-                    <td className="py-3 pr-4 text-stone-500">{item.sortOrder}</td>
-                    <td className="py-3 pr-4">
-                      <button
-                        onClick={() => toggleActive(item)}
-                        className={`rounded-lg px-2 py-1 text-xs font-semibold ${
-                          item.isActive
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-stone-100 text-stone-500'
-                        }`}
-                      >
-                        {item.isActive ? 'Active' : 'Inactive'}
-                      </button>
-                    </td>
-                    <td className="py-3">
-                      <button
-                        onClick={() => deleteItem(item.id)}
-                        className="rounded-lg bg-red-50 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-100"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {items.map((item) =>
+                  editingId === item.id ? (
+                    <tr key={item.id} className="border-b bg-amber-50 last:border-0">
+                      <td className="py-2 pr-4 font-mono text-xs text-stone-500">{item.code}</td>
+                      <td className="py-2 pr-4">
+                        <input
+                          value={editLabel}
+                          onChange={(e) => setEditLabel(e.target.value)}
+                          className="w-full rounded-lg border px-2 py-1 text-sm"
+                          autoFocus
+                        />
+                      </td>
+                      <td className="py-2 pr-4">
+                        <input
+                          value={editSort}
+                          onChange={(e) => setEditSort(e.target.value)}
+                          type="number"
+                          className="w-16 rounded-lg border px-2 py-1 text-sm"
+                        />
+                      </td>
+                      <td className="py-2 pr-4" />
+                      <td className="py-2">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => saveEdit(item.id)}
+                            className="rounded-lg bg-[#6f4e37] px-3 py-1 text-xs font-semibold text-white"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => setEditingId(null)}
+                            className="rounded-lg border px-3 py-1 text-xs font-semibold text-stone-600"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr key={item.id} className="border-b last:border-0">
+                      <td className="py-3 pr-4 font-mono text-xs text-stone-600">{item.code}</td>
+                      <td className="py-3 pr-4">{item.label}</td>
+                      <td className="py-3 pr-4 text-stone-500">{item.sortOrder}</td>
+                      <td className="py-3 pr-4">
+                        <button
+                          onClick={() => toggleActive(item)}
+                          className={`rounded-lg px-2 py-1 text-xs font-semibold ${
+                            item.isActive
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-stone-100 text-stone-500'
+                          }`}
+                        >
+                          {item.isActive ? 'Active' : 'Inactive'}
+                        </button>
+                      </td>
+                      <td className="py-3">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => startEdit(item)}
+                            className="rounded-lg bg-stone-100 px-2 py-1 text-xs font-semibold text-stone-600 hover:bg-stone-200"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deleteItem(item.id)}
+                            className="rounded-lg bg-red-50 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-100"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                )}
                 {items.length === 0 && (
                   <tr>
                     <td colSpan={5} className="py-6 text-center text-stone-400">
