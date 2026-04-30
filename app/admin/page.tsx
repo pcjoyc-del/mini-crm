@@ -10,7 +10,7 @@ export default function AdminPage() {
           <p className="mt-1 text-stone-500">Manage system configuration. ADMIN access only.</p>
         </section>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <a
             href="/admin/master-data"
             className="rounded-2xl bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
@@ -41,6 +41,17 @@ export default function AdminPage() {
             <h2 className="mt-3 text-lg font-bold text-stone-800">Sales Users</h2>
             <p className="mt-1 text-sm text-stone-500">
               Manage sales staff profiles and store assignments
+            </p>
+          </a>
+
+          <a
+            href="/admin/users"
+            className="rounded-2xl bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
+          >
+            <div className="text-2xl">🔑</div>
+            <h2 className="mt-3 text-lg font-bold text-stone-800">Users</h2>
+            <p className="mt-1 text-sm text-stone-500">
+              Add and manage login accounts for all staff
             </p>
           </a>
         </div>
