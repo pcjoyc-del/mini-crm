@@ -132,7 +132,7 @@ export default function StoresPage() {
               <input
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                placeholder="CODE (e.g. BKK-BANGNA)"
+                placeholder="Store Code"
                 className="w-44 rounded-xl border px-3 py-2 font-mono text-sm uppercase"
               />
               <input

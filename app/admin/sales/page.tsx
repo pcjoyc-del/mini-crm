@@ -7,10 +7,9 @@ type SalesUser = { id: string; employeeCode: string; displayName: string; isActi
 
 export default function SalesPage() {
   const [sales, setSales] = useState<SalesUser[]>([]);
-  const [stores, setStores] = useState<Store[]>([]);
   const [empCode, setEmpCode] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const [storeId, setStoreId] = useState('');
+  const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState('');
 
   const loadSales = async () => {
@@ -19,15 +18,8 @@ export default function SalesPage() {
     setSales(json.data || []);
   };
 
-  const loadStores = async () => {
-    const res = await fetch('/api/admin/stores');
-    const json = await res.json();
-    setStores(json.data || []);
-  };
-
   useEffect(() => {
     loadSales();
-    loadStores();
   }, []);
 
   const add = async () => {
@@ -42,13 +34,13 @@ export default function SalesPage() {
       body: JSON.stringify({
         employeeCode: empCode.trim().toUpperCase(),
         displayName: displayName.trim(),
-        storeId: storeId || null,
+        isActive,
       }),
     });
     if (res.ok) {
       setEmpCode('');
       setDisplayName('');
-      setStoreId('');
+      setIsActive(true);
       loadSales();
     } else {
       const json = await res.json();
@@ -150,18 +142,29 @@ export default function SalesPage() {
                 placeholder="Display Name"
                 className="flex-1 rounded-xl border px-3 py-2 text-sm"
               />
-              <select
-                value={storeId}
-                onChange={(e) => setStoreId(e.target.value)}
-                className="w-48 rounded-xl border px-3 py-2 text-sm"
-              >
-                <option value="">Select store</option>
-                {stores.map((st) => (
-                  <option key={st.id} value={st.id}>
-                    {st.name}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-4 rounded-xl border px-4 py-2">
+                <span className="text-sm text-stone-500">Status</span>
+                <label className="flex cursor-pointer items-center gap-1.5 text-sm">
+                  <input
+                    type="radio"
+                    name="newSalesStatus"
+                    checked={isActive}
+                    onChange={() => setIsActive(true)}
+                    className="accent-[#6f4e37]"
+                  />
+                  Active
+                </label>
+                <label className="flex cursor-pointer items-center gap-1.5 text-sm">
+                  <input
+                    type="radio"
+                    name="newSalesStatus"
+                    checked={!isActive}
+                    onChange={() => setIsActive(false)}
+                    className="accent-[#6f4e37]"
+                  />
+                  Inactive
+                </label>
+              </div>
               <button
                 onClick={add}
                 className="rounded-xl bg-[#6f4e37] px-6 py-2 text-sm font-bold text-white"

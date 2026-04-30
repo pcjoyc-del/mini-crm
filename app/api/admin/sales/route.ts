@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   }
   try {
     const body = await req.json();
-    const { employeeCode, displayName, storeId } = body;
+    const { employeeCode, displayName, isActive } = body;
 
     if (!employeeCode || !displayName) {
       return NextResponse.json({ error: { message: 'employeeCode and displayName are required' } }, { status: 400 });
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       data: {
         employeeCode: employeeCode.trim(),
         displayName: displayName.trim(),
-        ...(storeId ? { storeId } : {}),
+        isActive: isActive !== undefined ? Boolean(isActive) : true,
       },
       include: { store: true },
     });
