@@ -83,8 +83,12 @@ export default function MasterDataPage() {
       const cols = Object.keys(rows[0]);
       setExcelColumns(cols);
       setExcelRows(rows);
-      setCodeCol(cols[0]);
-      setLabelCol(cols.length > 1 ? cols[1] : cols[0]);
+      const defaultCode = cols.find((c) => /code|id|รหัส/i.test(c)) ?? cols[0];
+      const defaultLabel = cols.find((c) => /name|label|ชื่อ|model|display/i.test(c) && c !== defaultCode)
+        ?? cols.find((c) => c !== defaultCode)
+        ?? cols[0];
+      setCodeCol(defaultCode);
+      setLabelCol(defaultLabel);
       setImportStep('mapping');
     };
     reader.readAsBinaryString(file);
@@ -273,18 +277,21 @@ export default function MasterDataPage() {
                     </p>
                     <div className="grid gap-4 md:grid-cols-2">
                       <div>
-                        <label className="mb-1.5 block text-xs font-semibold uppercase text-stone-500">Code (รหัส)</label>
+                        <label className="mb-1.5 block text-xs font-semibold uppercase text-stone-500">Code (รหัสในระบบ)</label>
                         <select value={codeCol} onChange={(e) => setCodeCol(e.target.value)} className="w-full rounded-xl border px-3 py-2 text-sm">
                           {excelColumns.map((c) => <option key={c} value={c}>{c}</option>)}
                         </select>
                         {excelRows[0] && <p className="mt-1 text-xs text-stone-400">ตัวอย่าง: "{String(excelRows[0][codeCol] ?? '')}"</p>}
                       </div>
                       <div>
-                        <label className="mb-1.5 block text-xs font-semibold uppercase text-stone-500">Label (ชื่อที่แสดง)</label>
+                        <label className="mb-1.5 block text-xs font-semibold uppercase text-stone-500">Model (ชื่อที่แสดง)</label>
                         <select value={labelCol} onChange={(e) => setLabelCol(e.target.value)} className="w-full rounded-xl border px-3 py-2 text-sm">
                           {excelColumns.map((c) => <option key={c} value={c}>{c}</option>)}
                         </select>
                         {excelRows[0] && <p className="mt-1 text-xs text-stone-400">ตัวอย่าง: "{String(excelRows[0][labelCol] ?? '')}"</p>}
+                        {codeCol === labelCol && (
+                          <p className="mt-1 text-xs text-amber-600">⚠ ใช้ column เดียวกับ Code — ถ้าไฟล์มีคอลัมน์ชื่อ Model ให้เลือกแทน</p>
+                        )}
                       </div>
                     </div>
                     <div className="flex gap-3">
