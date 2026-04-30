@@ -31,7 +31,6 @@ export default function MasterDataPage() {
   const [loading, setLoading] = useState(false);
   const [newCode, setNewCode] = useState('');
   const [newLabel, setNewLabel] = useState('');
-  const [newSort, setNewSort] = useState('');
   const [error, setError] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLabel, setEditLabel] = useState('');
@@ -62,13 +61,12 @@ export default function MasterDataPage() {
         domain: activeDomain,
         code: newCode.trim().toUpperCase(),
         label: newLabel.trim(),
-        sortOrder: parseInt(newSort) || items.length + 1,
+        sortOrder: items.length + 1,
       }),
     });
     if (res.ok) {
       setNewCode('');
       setNewLabel('');
-      setNewSort('');
       load(activeDomain);
     } else {
       const json = await res.json();
@@ -258,13 +256,6 @@ export default function MasterDataPage() {
                 onChange={(e) => setNewLabel(e.target.value)}
                 placeholder="Display Label"
                 className="flex-1 rounded-xl border px-3 py-2 text-sm"
-              />
-              <input
-                value={newSort}
-                onChange={(e) => setNewSort(e.target.value)}
-                placeholder="Sort"
-                type="number"
-                className="w-20 rounded-xl border px-3 py-2 text-sm"
               />
               <button
                 onClick={addItem}
