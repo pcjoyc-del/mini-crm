@@ -187,9 +187,9 @@ export default function NewLeadPage() {
             <h2 className="mb-4 text-xl font-bold text-stone-700">Qualification</h2>
 
             <div className="space-y-4">
-              <ModelPickerInput values={form.interestedModelCodes} onChange={(v) => setField('interestedModelCodes', v)} options={interestedModelOptions} />
-              <MultiSelectInput label="Category" values={form.categoryCodes} onChange={(v) => setField('categoryCodes', v)} options={categoryOptions} />
-              <MultiSelectInput label="Material" values={form.materialCodes} onChange={(v) => setField('materialCodes', v)} options={materialOptions} />
+              <ModelPickerInput label="Interested Model" values={form.interestedModelCodes} onChange={(v) => setField('interestedModelCodes', v)} options={interestedModelOptions} />
+              <ModelPickerInput label="Category" values={form.categoryCodes} onChange={(v) => setField('categoryCodes', v)} options={categoryOptions} />
+              <ModelPickerInput label="Material" values={form.materialCodes} onChange={(v) => setField('materialCodes', v)} options={materialOptions} />
               <div className="grid gap-4 md:grid-cols-2">
                 <TextInput label="Size" value={form.sizeText} onChange={(v) => setField('sizeText', v)} placeholder="เช่น 280 cm / 3 seats / L-shape 300x180" />
                 <SelectInput label="Price Range" value={form.priceRangeCode} onChange={(v) => setField('priceRangeCode', v)} options={priceRangeOptions} />
@@ -286,58 +286,15 @@ function SelectInput({
   );
 }
 
-function MultiSelectInput({
-  label,
-  values,
-  onChange,
-  options,
-}: {
-  label: string;
-  values: string[];
-  onChange: (values: string[]) => void;
-  options: Option[] | null;
-}) {
-  const toggle = (code: string) => {
-    if (values.includes(code)) {
-      onChange(values.filter((v) => v !== code));
-    } else {
-      onChange([...values, code]);
-    }
-  };
-
-  return (
-    <div>
-      <label className="font-semibold">{label}</label>
-      <div className="mt-2 flex flex-wrap gap-2">
-        {options === null && <span className="text-sm text-stone-400">Loading...</span>}
-        {options !== null && options.length === 0 && (
-          <span className="text-sm text-stone-400">ยังไม่มีข้อมูล — กรุณาเพิ่มที่ Admin → Master Data</span>
-        )}
-        {(options ?? []).map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => toggle(opt.value)}
-            className={`rounded-xl border px-3 py-1.5 text-sm font-medium transition-colors ${
-              values.includes(opt.value)
-                ? 'border-[#6f4e37] bg-[#6f4e37] text-white'
-                : 'border-stone-300 bg-white text-stone-700 hover:border-[#6f4e37]'
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 function ModelPickerInput({
+  label,
   values,
   onChange,
   options,
   max = 5,
 }: {
+  label: string;
   values: string[];
   onChange: (values: string[]) => void;
   options: Option[] | null;
@@ -362,7 +319,7 @@ function ModelPickerInput({
   return (
     <div>
       <label className="font-semibold">
-        Interested Model{' '}
+        {label}{' '}
         <span className="text-xs font-normal text-stone-400">(สูงสุด {max} รายการ)</span>
       </label>
 
@@ -398,7 +355,7 @@ function ModelPickerInput({
               ? 'Loading...'
               : available.length === 0
               ? 'ไม่มีรายการเพิ่มเติม'
-              : '+ เลือก Model...'}
+              : `+ เลือก ${label}...`}
           </option>
           {available.map((opt) => (
             <option key={opt.value} value={opt.value}>

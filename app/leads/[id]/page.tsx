@@ -233,9 +233,9 @@ export default function LeadDetailPage() {
           <h2 className="mb-4 text-lg font-bold text-stone-700">Qualification</h2>
 
           <div className="space-y-4">
-            <ModelPickerField values={form.interestedModelCodes ?? []} editing={editing} onChange={(v) => setField('interestedModelCodes', v)} options={interestedModelOptions} />
-            <MultiSelectField label="Category" values={form.categoryCodes ?? []} editing={editing} onChange={(v) => setField('categoryCodes', v)} options={categoryOptions} />
-            <MultiSelectField label="Material" values={form.materialCodes ?? []} editing={editing} onChange={(v) => setField('materialCodes', v)} options={materialOptions} />
+            <ModelPickerField label="Interested Model" values={form.interestedModelCodes ?? []} editing={editing} onChange={(v) => setField('interestedModelCodes', v)} options={interestedModelOptions} />
+            <ModelPickerField label="Category" values={form.categoryCodes ?? []} editing={editing} onChange={(v) => setField('categoryCodes', v)} options={categoryOptions} />
+            <ModelPickerField label="Material" values={form.materialCodes ?? []} editing={editing} onChange={(v) => setField('materialCodes', v)} options={materialOptions} />
             <div className="grid gap-4 md:grid-cols-2">
               <TextField label="Size" value={form.sizeText || ''} editing={editing} onChange={(v) => setField('sizeText', v)} />
               <SelectField label="Price Range" value={form.priceRangeCode || ''} editing={editing} onChange={(v) => setField('priceRangeCode', v)} options={priceRangeOptions} />
@@ -360,70 +360,16 @@ function SelectField({
   );
 }
 
-function MultiSelectField({
-  label,
-  values,
-  editing,
-  onChange,
-  options,
-}: {
-  label: string;
-  values: string[];
-  editing: boolean;
-  onChange: (values: string[]) => void;
-  options: Option[] | null;
-}) {
-  const toggle = (code: string) => {
-    if (values.includes(code)) {
-      onChange(values.filter((v) => v !== code));
-    } else {
-      onChange([...values, code]);
-    }
-  };
-
-  const displayLabels = values
-    .map((v) => (options ?? []).find((o) => o.value === v)?.label ?? v)
-    .join(', ');
-
-  return (
-    <div className="rounded-xl border bg-stone-50 p-4">
-      <div className="text-xs font-semibold uppercase text-stone-500">{label}</div>
-
-      {editing ? (
-        <div className="mt-2 flex flex-wrap gap-2">
-          {options === null && <span className="text-sm text-stone-400">Loading...</span>}
-          {options !== null && options.length === 0 && (
-            <span className="text-sm text-stone-400">ยังไม่มีข้อมูล — กรุณาเพิ่มที่ Admin → Master Data</span>
-          )}
-          {(options ?? []).map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => toggle(opt.value)}
-              className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
-                values.includes(opt.value)
-                  ? 'border-[#6f4e37] bg-[#6f4e37] text-white'
-                  : 'border-stone-300 bg-white text-stone-700 hover:border-[#6f4e37]'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="mt-1 text-sm text-stone-900">{displayLabels || '-'}</div>
-      )}
-    </div>
-  );
-}
 
 function ModelPickerField({
+  label,
   values,
   editing,
   onChange,
   options,
   max = 5,
 }: {
+  label: string;
   values: string[];
   editing: boolean;
   onChange: (values: string[]) => void;
@@ -451,7 +397,7 @@ function ModelPickerField({
   return (
     <div className="rounded-xl border bg-stone-50 p-4">
       <div className="text-xs font-semibold uppercase text-stone-500">
-        Interested Model
+        {label}
         {editing && <span className="ml-1 font-normal normal-case text-stone-400">(สูงสุด {max} รายการ)</span>}
       </div>
 
@@ -489,7 +435,7 @@ function ModelPickerField({
                   ? 'Loading...'
                   : available.length === 0
                   ? 'ไม่มีรายการเพิ่มเติม'
-                  : '+ เลือก Model...'}
+                  : `+ เลือก ${label}...`}
               </option>
               {available.map((opt) => (
                 <option key={opt.value} value={opt.value}>
