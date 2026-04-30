@@ -48,28 +48,37 @@ export default function LeadDetailPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  const [interestedModelOptions, setInterestedModelOptions] = useState<Option[]>([{ label: 'Select model', value: '' }]);
-  const [categoryOptions, setCategoryOptions] = useState<Option[]>([{ label: 'Select category', value: '' }]);
-  const [materialOptions, setMaterialOptions] = useState<Option[]>([{ label: 'Select material', value: '' }]);
+  const [interestedModelOptions, setInterestedModelOptions] = useState<Option[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<Option[]>([]);
+  const [materialOptions, setMaterialOptions] = useState<Option[]>([]);
   const [priceRangeOptions, setPriceRangeOptions] = useState<Option[]>([{ label: 'Select price range', value: '' }]);
   const [usageTimingOptions, setUsageTimingOptions] = useState<Option[]>([{ label: 'Select usage timing', value: '' }]);
+
+  function mapLeadToForm(lead: any) {
+    return {
+      ...lead,
+      interestedModelCodes: lead.interestedModels?.map((m: any) => m.code) ?? [],
+      categoryCodes: lead.categories?.map((c: any) => c.code) ?? [],
+      materialCodes: lead.materials?.map((m: any) => m.code) ?? [],
+    };
+  }
 
   useEffect(() => {
     fetch(`/api/leads/${id}`)
       .then((res) => res.json())
       .then((json) => {
         setLead(json.data);
-        setForm(json.data);
+        setForm(mapLeadToForm(json.data));
       });
 
     fetchOptions('/api/admin/master-data?domain=interested_model&active=true', (i) => ({ label: i.label, value: i.code }))
-      .then((opts) => setInterestedModelOptions([{ label: 'Select model', value: '' }, ...opts]));
+      .then((opts) => setInterestedModelOptions(opts));
 
     fetchOptions('/api/admin/master-data?domain=category&active=true', (i) => ({ label: i.label, value: i.code }))
-      .then((opts) => setCategoryOptions([{ label: 'Select category', value: '' }, ...opts]));
+      .then((opts) => setCategoryOptions(opts));
 
     fetchOptions('/api/admin/master-data?domain=material&active=true', (i) => ({ label: i.label, value: i.code }))
-      .then((opts) => setMaterialOptions([{ label: 'Select material', value: '' }, ...opts]));
+      .then((opts) => setMaterialOptions(opts));
 
     fetchOptions('/api/admin/master-data?domain=price_range&active=true', (i) => ({ label: i.label, value: i.code }))
       .then((opts) => setPriceRangeOptions([{ label: 'Select price range', value: '' }, ...opts]));
@@ -84,7 +93,7 @@ export default function LeadDetailPage() {
 
   const isWon = form.status === 'WON';
 
-  const setField = (key: string, value: string | boolean | null) => {
+  const setField = (key: string, value: any) => {
     setForm((prev: any) => ({ ...prev, [key]: value }));
   };
 
@@ -106,7 +115,7 @@ export default function LeadDetailPage() {
       }
 
       setLead(json.data);
-      setForm(json.data);
+      setForm(mapLeadToForm(json.data));
       setEditing(false);
     } catch (err) {
       setError((err as Error).message || 'Failed to save lead');
@@ -141,7 +150,7 @@ export default function LeadDetailPage() {
                 <>
                   <button
                     onClick={() => {
-                      setForm(lead);
+                      setForm(mapLeadToForm(lead));
                       setEditing(false);
                     }}
                     className="rounded-xl border border-[#6f4e37] px-5 py-3 text-sm font-bold text-[#6f4e37]"
@@ -223,14 +232,15 @@ export default function LeadDetailPage() {
         <section className="rounded-2xl bg-white p-5 shadow-sm">
           <h2 className="mb-4 text-lg font-bold text-stone-700">Qualification</h2>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <SelectField label="Interested Model" value={form.interestedModelCode || ''} editing={editing} onChange={(v) => setField('interestedModelCode', v)} options={interestedModelOptions} />
-            <SelectField label="Category" value={form.categoryCode || ''} editing={editing} onChange={(v) => setField('categoryCode', v)} options={categoryOptions} />
-            <SelectField label="Material" value={form.materialCode || ''} editing={editing} onChange={(v) => setField('materialCode', v)} options={materialOptions} />
-            <TextField label="Size" value={form.sizeText || ''} editing={editing} onChange={(v) => setField('sizeText', v)} />
-            <SelectField label="Price Range" value={form.priceRangeCode || ''} editing={editing} onChange={(v) => setField('priceRangeCode', v)} options={priceRangeOptions} />
-            <SelectField label="Usage Timing" value={form.usageTimingCode || ''} editing={editing} onChange={(v) => setField('usageTimingCode', v)} options={usageTimingOptions} />
-            <BooleanField label="Only Sofa" value={form.onlySofa} editing={editing} onChange={(v) => setField('onlySofa', v)} />
+          <div className="space-y-4">
+            <MultiSelectField label="Interested Model" values={form.interestedModelCodes ?? []} editing={editing} onChange={(v) => setField('interestedModelCodes', v)} options={interestedModelOptions} />
+            <MultiSelectField label="Category" values={form.categoryCodes ?? []} editing={editing} onChange={(v) => setField('categoryCodes', v)} options={categoryOptions} />
+            <MultiSelectField label="Material" values={form.materialCodes ?? []} editing={editing} onChange={(v) => setField('materialCodes', v)} options={materialOptions} />
+            <div className="grid gap-4 md:grid-cols-2">
+              <TextField label="Size" value={form.sizeText || ''} editing={editing} onChange={(v) => setField('sizeText', v)} />
+              <SelectField label="Price Range" value={form.priceRangeCode || ''} editing={editing} onChange={(v) => setField('priceRangeCode', v)} options={priceRangeOptions} />
+              <SelectField label="Usage Timing" value={form.usageTimingCode || ''} editing={editing} onChange={(v) => setField('usageTimingCode', v)} options={usageTimingOptions} />
+            </div>
             <TextField label="Note" value={form.note || ''} editing={editing} onChange={(v) => setField('note', v)} textarea />
           </div>
         </section>
@@ -350,31 +360,55 @@ function SelectField({
   );
 }
 
-function BooleanField({
+function MultiSelectField({
   label,
-  value,
+  values,
   editing,
   onChange,
+  options,
 }: {
   label: string;
-  value: boolean | null;
+  values: string[];
   editing: boolean;
-  onChange: (value: boolean | null) => void;
+  onChange: (values: string[]) => void;
+  options: Option[];
 }) {
-  const display = value === true ? 'Yes' : value === false ? 'No' : '-';
+  const toggle = (code: string) => {
+    if (values.includes(code)) {
+      onChange(values.filter((v) => v !== code));
+    } else {
+      onChange([...values, code]);
+    }
+  };
+
+  const displayLabels = values
+    .map((v) => options.find((o) => o.value === v)?.label ?? v)
+    .join(', ');
 
   return (
     <div className="rounded-xl border bg-stone-50 p-4">
       <div className="text-xs font-semibold uppercase text-stone-500">{label}</div>
 
       {editing ? (
-        <div className="mt-2 flex gap-2">
-          <button type="button" onClick={() => onChange(true)} className={`rounded-lg border px-3 py-2 text-sm ${value === true ? 'bg-[#6f4e37] text-white' : 'bg-white'}`}>Yes</button>
-          <button type="button" onClick={() => onChange(false)} className={`rounded-lg border px-3 py-2 text-sm ${value === false ? 'bg-[#6f4e37] text-white' : 'bg-white'}`}>No</button>
-          <button type="button" onClick={() => onChange(null)} className={`rounded-lg border px-3 py-2 text-sm ${value === null ? 'bg-stone-200' : 'bg-white'}`}>Unknown</button>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {options.length === 0 && <span className="text-sm text-stone-400">Loading...</span>}
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => toggle(opt.value)}
+              className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ${
+                values.includes(opt.value)
+                  ? 'border-[#6f4e37] bg-[#6f4e37] text-white'
+                  : 'border-stone-300 bg-white text-stone-700 hover:border-[#6f4e37]'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       ) : (
-        <div className="mt-1 text-sm text-stone-900">{display}</div>
+        <div className="mt-1 text-sm text-stone-900">{displayLabels || '-'}</div>
       )}
     </div>
   );

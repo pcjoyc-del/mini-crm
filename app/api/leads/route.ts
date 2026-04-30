@@ -8,12 +8,9 @@ function text(value: unknown) {
   return v === '' ? null : v;
 }
 
-function bool(value: unknown) {
-  if (value === true) return true;
-  if (value === false) return false;
-  if (value === 'true') return true;
-  if (value === 'false') return false;
-  return null;
+function codes(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((v) => typeof v === 'string' && v.trim() !== '');
 }
 
 export async function GET() {
@@ -122,13 +119,12 @@ export async function POST(req: NextRequest) {
         lineId: text(body.lineId),
         residentLocation: text(body.residentLocation),
 
-        interestedModelCode: text(body.interestedModelCode),
-        categoryCode: text(body.categoryCode),
-        materialCode: text(body.materialCode),
         sizeText: text(body.sizeText),
         priceRangeCode: text(body.priceRangeCode),
         usageTimingCode: text(body.usageTimingCode),
-        onlySofa: bool(body.onlySofa),
+        interestedModels: { create: codes(body.interestedModelCodes).map((code) => ({ code })) },
+        categories:       { create: codes(body.categoryCodes).map((code) => ({ code })) },
+        materials:        { create: codes(body.materialCodes).map((code) => ({ code })) },
 
         visitDatetime: visitDate,
         store:     { connect: { id: store.id } },
@@ -156,12 +152,12 @@ export async function POST(req: NextRequest) {
       include: {
         store: true,
         sales: true,
+        interestedModels: true,
+        categories: true,
+        materials: true,
         visits: {
           orderBy: { visitDatetime: 'desc' },
-          include: {
-            store: true,
-            sales: true,
-          },
+          include: { store: true, sales: true },
         },
       },
     });

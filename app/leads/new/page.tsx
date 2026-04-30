@@ -9,13 +9,12 @@ type NewLeadForm = {
   lineId: string;
   residentLocation: string;
 
-  interestedModelCode: string;
-  categoryCode: string;
-  materialCode: string;
+  interestedModelCodes: string[];
+  categoryCodes: string[];
+  materialCodes: string[];
   sizeText: string;
   priceRangeCode: string;
   usageTimingCode: string;
-  onlySofa: boolean | null;
 
   visitDatetime: string;
   storeId: string;
@@ -53,13 +52,12 @@ export default function NewLeadPage() {
     phone: '',
     lineId: '',
     residentLocation: '',
-    interestedModelCode: '',
-    categoryCode: '',
-    materialCode: '',
+    interestedModelCodes: [],
+    categoryCodes: [],
+    materialCodes: [],
     sizeText: '',
     priceRangeCode: '',
     usageTimingCode: '',
-    onlySofa: null,
     visitDatetime: toLocalDateTimeValue(new Date()),
     storeId: '',
     salesId: '',
@@ -72,9 +70,9 @@ export default function NewLeadPage() {
   const [storeOptions, setStoreOptions] = useState<Option[]>([{ label: 'Select store', value: '' }]);
   const [salesOptions, setSalesOptions] = useState<Option[]>([{ label: 'Select sales', value: '' }]);
   const [channelOptions, setChannelOptions] = useState<Option[]>([{ label: 'Select channel', value: '' }]);
-  const [interestedModelOptions, setInterestedModelOptions] = useState<Option[]>([{ label: 'Select model', value: '' }]);
-  const [categoryOptions, setCategoryOptions] = useState<Option[]>([{ label: 'Select category', value: '' }]);
-  const [materialOptions, setMaterialOptions] = useState<Option[]>([{ label: 'Select material', value: '' }]);
+  const [interestedModelOptions, setInterestedModelOptions] = useState<Option[]>([]);
+  const [categoryOptions, setCategoryOptions] = useState<Option[]>([]);
+  const [materialOptions, setMaterialOptions] = useState<Option[]>([]);
   const [priceRangeOptions, setPriceRangeOptions] = useState<Option[]>([{ label: 'Select price range', value: '' }]);
   const [usageTimingOptions, setUsageTimingOptions] = useState<Option[]>([{ label: 'Select usage timing', value: '' }]);
 
@@ -89,13 +87,13 @@ export default function NewLeadPage() {
       .then((opts) => setChannelOptions([{ label: 'Select channel', value: '' }, ...opts]));
 
     fetchOptions('/api/admin/master-data?domain=interested_model&active=true', (i) => ({ label: i.label, value: i.code }))
-      .then((opts) => setInterestedModelOptions([{ label: 'Select model', value: '' }, ...opts]));
+      .then((opts) => setInterestedModelOptions(opts));
 
     fetchOptions('/api/admin/master-data?domain=category&active=true', (i) => ({ label: i.label, value: i.code }))
-      .then((opts) => setCategoryOptions([{ label: 'Select category', value: '' }, ...opts]));
+      .then((opts) => setCategoryOptions(opts));
 
     fetchOptions('/api/admin/master-data?domain=material&active=true', (i) => ({ label: i.label, value: i.code }))
-      .then((opts) => setMaterialOptions([{ label: 'Select material', value: '' }, ...opts]));
+      .then((opts) => setMaterialOptions(opts));
 
     fetchOptions('/api/admin/master-data?domain=price_range&active=true', (i) => ({ label: i.label, value: i.code }))
       .then((opts) => setPriceRangeOptions([{ label: 'Select price range', value: '' }, ...opts]));
@@ -107,7 +105,7 @@ export default function NewLeadPage() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const setField = (key: keyof NewLeadForm, value: string | boolean | null) => {
+  const setField = (key: keyof NewLeadForm, value: any) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -188,27 +186,14 @@ export default function NewLeadPage() {
           <section className="rounded-2xl bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-xl font-bold text-stone-700">Qualification</h2>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <SelectInput label="Interested Model" value={form.interestedModelCode} onChange={(v) => setField('interestedModelCode', v)} options={interestedModelOptions} />
-              <SelectInput label="Category" value={form.categoryCode} onChange={(v) => setField('categoryCode', v)} options={categoryOptions} />
-              <SelectInput label="Material" value={form.materialCode} onChange={(v) => setField('materialCode', v)} options={materialOptions} />
-              <TextInput label="Size" value={form.sizeText} onChange={(v) => setField('sizeText', v)} placeholder="เช่น 280 cm / 3 seats / L-shape 300x180" />
-              <SelectInput label="Price Range" value={form.priceRangeCode} onChange={(v) => setField('priceRangeCode', v)} options={priceRangeOptions} />
-              <SelectInput label="Usage Timing" value={form.usageTimingCode} onChange={(v) => setField('usageTimingCode', v)} options={usageTimingOptions} />
-
-              <div>
-                <label className="font-semibold">Only Sofa?</label>
-                <div className="mt-3 flex gap-3">
-                  <button type="button" onClick={() => setField('onlySofa', true)} className={`rounded-xl border px-4 py-3 ${form.onlySofa === true ? 'bg-[#6f4e37] text-white' : 'bg-white'}`}>
-                    Yes
-                  </button>
-                  <button type="button" onClick={() => setField('onlySofa', false)} className={`rounded-xl border px-4 py-3 ${form.onlySofa === false ? 'bg-[#6f4e37] text-white' : 'bg-white'}`}>
-                    No
-                  </button>
-                  <button type="button" onClick={() => setField('onlySofa', null)} className={`rounded-xl border px-4 py-3 ${form.onlySofa === null ? 'bg-stone-100' : 'bg-white'}`}>
-                    Unknown
-                  </button>
-                </div>
+            <div className="space-y-4">
+              <MultiSelectInput label="Interested Model" values={form.interestedModelCodes} onChange={(v) => setField('interestedModelCodes', v)} options={interestedModelOptions} />
+              <MultiSelectInput label="Category" values={form.categoryCodes} onChange={(v) => setField('categoryCodes', v)} options={categoryOptions} />
+              <MultiSelectInput label="Material" values={form.materialCodes} onChange={(v) => setField('materialCodes', v)} options={materialOptions} />
+              <div className="grid gap-4 md:grid-cols-2">
+                <TextInput label="Size" value={form.sizeText} onChange={(v) => setField('sizeText', v)} placeholder="เช่น 280 cm / 3 seats / L-shape 300x180" />
+                <SelectInput label="Price Range" value={form.priceRangeCode} onChange={(v) => setField('priceRangeCode', v)} options={priceRangeOptions} />
+                <SelectInput label="Usage Timing" value={form.usageTimingCode} onChange={(v) => setField('usageTimingCode', v)} options={usageTimingOptions} />
               </div>
             </div>
           </section>
@@ -297,6 +282,51 @@ function SelectInput({
           </option>
         ))}
       </select>
+    </div>
+  );
+}
+
+function MultiSelectInput({
+  label,
+  values,
+  onChange,
+  options,
+}: {
+  label: string;
+  values: string[];
+  onChange: (values: string[]) => void;
+  options: Option[];
+}) {
+  const toggle = (code: string) => {
+    if (values.includes(code)) {
+      onChange(values.filter((v) => v !== code));
+    } else {
+      onChange([...values, code]);
+    }
+  };
+
+  return (
+    <div>
+      <label className="font-semibold">{label}</label>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {options.length === 0 && (
+          <span className="text-sm text-stone-400">Loading...</span>
+        )}
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => toggle(opt.value)}
+            className={`rounded-xl border px-3 py-1.5 text-sm font-medium transition-colors ${
+              values.includes(opt.value)
+                ? 'border-[#6f4e37] bg-[#6f4e37] text-white'
+                : 'border-stone-300 bg-white text-stone-700 hover:border-[#6f4e37]'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

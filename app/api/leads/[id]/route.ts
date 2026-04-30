@@ -9,10 +9,9 @@ function text(value: unknown) {
   return v === '' ? null : v;
 }
 
-function bool(value: unknown) {
-  if (value === true) return true;
-  if (value === false) return false;
-  return null;
+function codes(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((v) => typeof v === 'string' && v.trim() !== '');
 }
 
 function getUser(req: NextRequest) {
@@ -47,6 +46,9 @@ export async function GET(
       include: {
         store: true,
         sales: true,
+        interestedModels: true,
+        categories: true,
+        materials: true,
         visits: {
           orderBy: { visitDatetime: 'desc' },
           include: { store: true, sales: true },
@@ -117,13 +119,12 @@ export async function PATCH(
         lineId: text(body.lineId),
         residentLocation: text(body.residentLocation),
 
-        interestedModelCode: text(body.interestedModelCode),
-        categoryCode: text(body.categoryCode),
-        materialCode: text(body.materialCode),
         sizeText: text(body.sizeText),
         priceRangeCode: text(body.priceRangeCode),
         usageTimingCode: text(body.usageTimingCode),
-        onlySofa: bool(body.onlySofa),
+        interestedModels: { deleteMany: {}, create: codes(body.interestedModelCodes).map((code) => ({ code })) },
+        categories:       { deleteMany: {}, create: codes(body.categoryCodes).map((code) => ({ code })) },
+        materials:        { deleteMany: {}, create: codes(body.materialCodes).map((code) => ({ code })) },
 
         note: text(body.note),
 
@@ -138,6 +139,9 @@ export async function PATCH(
       include: {
         store: true,
         sales: true,
+        interestedModels: true,
+        categories: true,
+        materials: true,
         visits: {
           orderBy: { visitDatetime: 'desc' },
           include: { store: true, sales: true },

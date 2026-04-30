@@ -193,17 +193,13 @@ model Lead {
   storeId                       String
   salesId                       String
   leadName                      String?
-  categoryCode                  String?
-  materialCode                  String?
   sizeText                      String?
-  onlySofa                      Boolean?
   residentLocation              String?
   customerName                  String?        @db.VarChar(255)
   salesOrderNo                  String?
   phone                         String?        @db.VarChar(50)
   lineId                        String?        @db.VarChar(80)
   source                        String
-  interestedModelCode           String?        @db.VarChar(80)
   priceRangeCode                String?        @db.VarChar(80)
   usageTimingCode               String?        @db.VarChar(80)
   residenceTypeCode             String?        @db.VarChar(80)
@@ -232,6 +228,9 @@ model Lead {
   secondaryInMerges   MergeActionSecondaryLead[]
   orders              Order[]
   visits              LeadVisit[]
+  interestedModels    LeadInterestedModel[]
+  categories          LeadCategory[]
+  materials           LeadMaterial[]
   lifecycleStatus     LeadLifecycleStatus        @default(LEAD)
   followUpTemperature FollowUpTemperature        @default(UNKNOWN)
 
@@ -259,6 +258,33 @@ model LeadStatusHistory {
 
   @@index([leadId, changedAt])
   @@index([toStatus, changedAt])
+}
+
+model LeadInterestedModel {
+  leadId String
+  code   String
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@id([leadId, code])
+  @@map("lead_interested_models")
+}
+
+model LeadCategory {
+  leadId String
+  code   String
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@id([leadId, code])
+  @@map("lead_categories")
+}
+
+model LeadMaterial {
+  leadId String
+  code   String
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@id([leadId, code])
+  @@map("lead_materials")
 }
 
 model Customer {
