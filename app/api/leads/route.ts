@@ -16,11 +16,6 @@ function codes(value: unknown): string[] {
 export async function GET() {
   try {
     const leads = await prisma.lead.findMany({
-      where: {
-        status: {
-          not: 'WON' as LeadStatus,
-        },
-      },
       orderBy: {
         updatedAt: 'desc',
       },
