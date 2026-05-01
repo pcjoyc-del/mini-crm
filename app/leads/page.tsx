@@ -15,9 +15,23 @@ export default function LeadListPage() {
   const [channel, setChannel] = useState('');
   const [sales, setSales] = useState('');
 
+  const [channelMap, setChannelMap] = useState<Record<string, string>>({});
+
   // 🔃 SORT STATE
   const [sortKey, setSortKey] = useState('visitDatetime');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
+  useEffect(() => {
+    fetch('/api/admin/master-data?domain=channel&active=true')
+      .then((r) => r.json())
+      .then((json) => {
+        const map = (json.data || []).reduce((acc: Record<string, string>, item: any) => {
+          acc[item.code] = item.label;
+          return acc;
+        }, {});
+        setChannelMap(map);
+      });
+  }, []);
 
   useEffect(() => {
     fetch('/api/leads')
@@ -140,7 +154,7 @@ export default function LeadListPage() {
         >
           <option value="">All Channel</option>
           {uniqueChannel.map((c) => (
-            <option key={c}>{c}</option>
+            <option key={c} value={c}>{channelMap[c] || c}</option>
           ))}
         </select>
 
@@ -170,16 +184,16 @@ export default function LeadListPage() {
 
       {/* TABLE */}
       <div className="bg-white rounded-2xl p-4 shadow">
-        <table className="w-full text-xs">
+        <table className="w-full text-sm">
           <thead className="border-b text-gray-500">
             <tr className="text-sm font-semibold">
-              <th className="pb-2">Lead</th>
-              <th className="pb-2">Store</th>
-              <th className="pb-2">Sales</th>
-              <th className="pb-2">Channel</th>
-              <th className="pb-2">Visits</th>
-              <th className="pb-2">Status</th>
-              <th className="pb-2">Temperature</th>
+              <th className="pb-2 text-left px-3">Lead</th>
+              <th className="pb-2 text-left px-3">Store</th>
+              <th className="pb-2 text-left px-3">Sales</th>
+              <th className="pb-2 text-left px-3">Channel</th>
+              <th className="pb-2 text-left px-3">Visits</th>
+              <th className="pb-2 text-left px-3">Status</th>
+              <th className="pb-2 text-left px-3">Temperature</th>
               <th className="pb-2" />
             </tr>
           </thead>
@@ -187,16 +201,19 @@ export default function LeadListPage() {
           <tbody>
             {filteredLeads.map((lead) => (
               <tr key={lead.id} className="border-b hover:bg-gray-50">
-                <td>{lead.leadName}</td>
-                <td>{lead.store?.name}</td>
-                <td>{lead.sales?.displayName}</td>
-                <td>{lead.source}</td>
-                <td>{lead.visits?.length || 0}</td>
-                <td>{lead.status}</td>
-                <td className="py-3">
-                  <TemperatureBadge value={lead.followUpTemperature} />
+                <td className="py-3 px-3">{lead.leadName}</td>
+                <td className="py-3 px-3">{lead.store?.name}</td>
+                <td className="py-3 px-3">{lead.sales?.displayName}</td>
+                <td className="py-3 px-3">{channelMap[lead.source] || lead.source}</td>
+                <td className="py-3 px-3">{lead.visits?.length || 0}</td>
+                <td className="py-3 px-3">{lead.status}</td>
+                <td className="py-3 px-3">
+                  {lead.status === 'WON'
+                    ? <span className="rounded-lg px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-700">{lead.customerName || '—'}</span>
+                    : <TemperatureBadge value={lead.followUpTemperature} />
+                  }
                 </td>
-                <td className="py-3 text-right">
+                <td className="py-3 px-3 text-right">
                   <button
                     onClick={() => router.push(`/leads/${lead.id}`)}
                     className="rounded-lg bg-stone-100 px-3 py-1 text-xs font-semibold text-stone-600 hover:bg-stone-200"
