@@ -85,26 +85,26 @@ export default function LeadListPage() {
   return (
     <main className="min-h-screen bg-[#f5efe5] p-6 text-sm">
       {/* HEADER */}
-      <div className="bg-white rounded-2xl p-6 mb-6 shadow flex justify-between">
-        <div>
-          <h1 className="text-lg font-semibold">Lead List</h1>
+      <div className="bg-white rounded-2xl p-6 mb-6 shadow flex justify-between items-center">
+        <div className="border rounded-xl px-5 py-3 bg-[#f5efe5]">
+          <h1 className="text-2xl font-bold">Lead List</h1>
         </div>
 
         <div className="flex gap-2">
-          <button onClick={handleLogout} className="border px-4 py-2 rounded text-xs">
+          <button onClick={handleLogout} className="border px-4 py-2 rounded text-sm font-bold">
             Logout
           </button>
 
           <button
             onClick={() => router.push('/admin')}
-            className="border border-[#7b4f2f] text-[#7b4f2f] px-4 py-2 rounded text-xs"
+            className="border border-[#7b4f2f] text-[#7b4f2f] px-4 py-2 rounded text-sm font-bold"
           >
             Admin
           </button>
 
           <button
             onClick={() => router.push('/leads/new')}
-            className="bg-[#7b4f2f] text-white px-4 py-2 rounded text-xs"
+            className="bg-[#7b4f2f] text-white px-4 py-2 rounded text-sm font-bold"
           >
             New Lead
           </button>
@@ -172,13 +172,13 @@ export default function LeadListPage() {
       <div className="bg-white rounded-2xl p-4 shadow">
         <table className="w-full text-xs">
           <thead className="border-b text-gray-500">
-            <tr>
-              <th>Lead</th>
-              <th>Store</th>
-              <th>Sales</th>
-              <th>Channel</th>
-              <th>Visits</th>
-              <th>Status</th>
+            <tr className="text-sm font-semibold">
+              <th className="pb-2">Lead</th>
+              <th className="pb-2">Store</th>
+              <th className="pb-2">Sales</th>
+              <th className="pb-2">Channel</th>
+              <th className="pb-2">Visits</th>
+              <th className="pb-2">Status</th>
             </tr>
           </thead>
 
