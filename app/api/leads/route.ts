@@ -133,6 +133,7 @@ export async function POST(req: NextRequest) {
 
         note: text(body.note),
         status: 'NEW_LEAD' as LeadStatus,
+        followUpTemperature: (['HOT', 'WARM', 'COLD'].includes(body.followUpTemperature) ? body.followUpTemperature : 'UNKNOWN') as any,
 
         createdBy: { connect: { id: adminUser.id } },
         updatedBy: { connect: { id: adminUser.id } },

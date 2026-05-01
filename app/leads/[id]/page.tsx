@@ -241,6 +241,7 @@ export default function LeadDetailPage() {
               <SelectField label="Price Range" value={form.priceRangeCode || ''} editing={editing} onChange={(v) => setField('priceRangeCode', v)} options={priceRangeOptions} />
               <SelectField label="Usage Timing" value={form.usageTimingCode || ''} editing={editing} onChange={(v) => setField('usageTimingCode', v)} options={usageTimingOptions} />
             </div>
+            <TemperatureField value={form.followUpTemperature || 'UNKNOWN'} editing={editing} onChange={(v) => setField('followUpTemperature', v)} />
             <TextField label="Note" value={form.note || ''} editing={editing} onChange={(v) => setField('note', v)} textarea />
           </div>
         </section>
@@ -451,6 +452,57 @@ function ModelPickerField({
         </>
       ) : (
         <div className="mt-1 text-sm text-stone-900">{displayLabels || '-'}</div>
+      )}
+    </div>
+  );
+}
+
+const TEMP_OPTIONS = [
+  { value: 'HOT',     label: '🔥 HOT',     active: 'border-red-400 bg-red-500 text-white',       badge: 'bg-red-100 text-red-600' },
+  { value: 'WARM',    label: '☀️ WARM',    active: 'border-orange-400 bg-orange-400 text-white',  badge: 'bg-orange-100 text-orange-600' },
+  { value: 'COLD',    label: '🧊 COLD',    active: 'border-blue-400 bg-blue-500 text-white',      badge: 'bg-blue-100 text-blue-600' },
+  { value: 'UNKNOWN', label: 'Unknown',    active: 'border-stone-300 bg-stone-100 text-stone-500', badge: 'bg-stone-100 text-stone-500' },
+] as const;
+
+function TemperatureField({
+  value,
+  editing,
+  onChange,
+}: {
+  value: string;
+  editing: boolean;
+  onChange: (value: string) => void;
+}) {
+  const current = TEMP_OPTIONS.find((t) => t.value === value) ?? TEMP_OPTIONS[3];
+
+  return (
+    <div className="rounded-xl border bg-stone-50 p-4">
+      <div className="text-xs font-semibold uppercase text-stone-500">
+        Buying Temperature
+        <span className="ml-1 font-normal normal-case text-stone-400">ความร้อน / โอกาสซื้อ</span>
+      </div>
+
+      {editing ? (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {TEMP_OPTIONS.map((t) => (
+            <button
+              key={t.value}
+              type="button"
+              onClick={() => onChange(t.value)}
+              className={`rounded-xl border px-4 py-2 text-sm font-semibold transition-all ${
+                value === t.value ? t.active : 'border-stone-200 bg-white text-stone-400 hover:border-stone-300'
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-2">
+          <span className={`rounded-lg px-3 py-1 text-sm font-semibold ${current.badge}`}>
+            {current.label}
+          </span>
+        </div>
       )}
     </div>
   );

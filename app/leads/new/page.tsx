@@ -15,6 +15,7 @@ type NewLeadForm = {
   sizeText: string;
   priceRangeCode: string;
   usageTimingCode: string;
+  followUpTemperature: 'HOT' | 'WARM' | 'COLD' | 'UNKNOWN';
 
   visitDatetime: string;
   storeId: string;
@@ -58,6 +59,7 @@ export default function NewLeadPage() {
     sizeText: '',
     priceRangeCode: '',
     usageTimingCode: '',
+    followUpTemperature: 'UNKNOWN',
     visitDatetime: toLocalDateTimeValue(new Date()),
     storeId: '',
     salesId: '',
@@ -194,6 +196,34 @@ export default function NewLeadPage() {
                 <TextInput label="Size" value={form.sizeText} onChange={(v) => setField('sizeText', v)} placeholder="เช่น 280 cm / 3 seats / L-shape 300x180" />
                 <SelectInput label="Price Range" value={form.priceRangeCode} onChange={(v) => setField('priceRangeCode', v)} options={priceRangeOptions} />
                 <SelectInput label="Usage Timing" value={form.usageTimingCode} onChange={(v) => setField('usageTimingCode', v)} options={usageTimingOptions} />
+              </div>
+
+              <div>
+                <label className="font-semibold">
+                  Buying Temperature{' '}
+                  <span className="text-xs font-normal text-stone-400">ความร้อน / โอกาสซื้อ</span>
+                </label>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {([
+                    { value: 'HOT', label: '🔥 HOT', cls: 'border-red-400 bg-red-500 text-white' },
+                    { value: 'WARM', label: '☀️ WARM', cls: 'border-orange-400 bg-orange-400 text-white' },
+                    { value: 'COLD', label: '🧊 COLD', cls: 'border-blue-400 bg-blue-500 text-white' },
+                    { value: 'UNKNOWN', label: 'Unknown', cls: 'border-stone-300 bg-stone-100 text-stone-500' },
+                  ] as const).map((t) => (
+                    <button
+                      key={t.value}
+                      type="button"
+                      onClick={() => setField('followUpTemperature', t.value)}
+                      className={`rounded-xl border px-4 py-2 text-sm font-semibold transition-all ${
+                        form.followUpTemperature === t.value
+                          ? t.cls
+                          : 'border-stone-200 bg-white text-stone-400 hover:border-stone-300'
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </section>

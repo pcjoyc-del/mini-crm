@@ -130,6 +130,7 @@ export async function PATCH(
 
         status: body.status as LeadStatus,
         identityStatus: body.identityStatus as IdentityStatus,
+        followUpTemperature: (['HOT', 'WARM', 'COLD', 'UNKNOWN'].includes(body.followUpTemperature) ? body.followUpTemperature : 'UNKNOWN') as any,
 
         customerName: body.status === 'WON' ? text(body.customerName) : null,
         salesOrderNo: body.status === 'WON' ? text(body.salesOrderNo) : null,

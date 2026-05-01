@@ -179,6 +179,7 @@ export default function LeadListPage() {
               <th className="pb-2">Channel</th>
               <th className="pb-2">Visits</th>
               <th className="pb-2">Status</th>
+              <th className="pb-2">Temperature</th>
               <th className="pb-2" />
             </tr>
           </thead>
@@ -192,6 +193,9 @@ export default function LeadListPage() {
                 <td>{lead.source}</td>
                 <td>{lead.visits?.length || 0}</td>
                 <td>{lead.status}</td>
+                <td className="py-3">
+                  <TemperatureBadge value={lead.followUpTemperature} />
+                </td>
                 <td className="py-3 text-right">
                   <button
                     onClick={() => router.push(`/leads/${lead.id}`)}
@@ -206,5 +210,21 @@ export default function LeadListPage() {
         </table>
       </div>
     </main>
+  );
+}
+
+const TEMP_BADGE: Record<string, { label: string; cls: string }> = {
+  HOT:     { label: '🔥 HOT',  cls: 'bg-red-100 text-red-600' },
+  WARM:    { label: '☀️ WARM', cls: 'bg-orange-100 text-orange-600' },
+  COLD:    { label: '🧊 COLD', cls: 'bg-blue-100 text-blue-600' },
+  UNKNOWN: { label: '-',       cls: 'text-stone-400' },
+};
+
+function TemperatureBadge({ value }: { value?: string }) {
+  const t = TEMP_BADGE[value ?? 'UNKNOWN'] ?? TEMP_BADGE.UNKNOWN;
+  return (
+    <span className={`rounded-lg px-2 py-0.5 text-xs font-semibold ${t.cls}`}>
+      {t.label}
+    </span>
   );
 }
