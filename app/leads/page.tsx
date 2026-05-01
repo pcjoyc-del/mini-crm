@@ -179,22 +179,27 @@ export default function LeadListPage() {
               <th className="pb-2">Channel</th>
               <th className="pb-2">Visits</th>
               <th className="pb-2">Status</th>
+              <th className="pb-2" />
             </tr>
           </thead>
 
           <tbody>
             {filteredLeads.map((lead) => (
-              <tr
-                key={lead.id}
-                className="border-b hover:bg-gray-50 cursor-pointer"
-                onClick={() => router.push(`/leads/${lead.id}`)}
-              >
+              <tr key={lead.id} className="border-b hover:bg-gray-50">
                 <td>{lead.leadName}</td>
                 <td>{lead.store?.name}</td>
                 <td>{lead.sales?.displayName}</td>
                 <td>{lead.source}</td>
                 <td>{lead.visits?.length || 0}</td>
                 <td>{lead.status}</td>
+                <td className="py-3 text-right">
+                  <button
+                    onClick={() => router.push(`/leads/${lead.id}`)}
+                    className="rounded-lg bg-stone-100 px-3 py-1 text-xs font-semibold text-stone-600 hover:bg-stone-200"
+                  >
+                    View Details
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
