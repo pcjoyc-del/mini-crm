@@ -47,6 +47,7 @@ export default function LeadDetailPage() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const conversionRef = useRef<HTMLElement>(null);
   const prevStatusRef = useRef<string | null>(null);
@@ -76,6 +77,12 @@ export default function LeadDetailPage() {
     }
     prevStatusRef.current = form?.status ?? null;
   }, [form?.status]);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((r) => r.json())
+      .then((json) => { if (json.data?.role === 'ADMIN') setIsAdmin(true); });
+  }, []);
 
   useEffect(() => {
     fetch(`/api/leads/${id}`)
@@ -109,6 +116,21 @@ export default function LeadDetailPage() {
 
   const setField = (key: string, value: any) => {
     setForm((prev: any) => ({ ...prev, [key]: value }));
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm(`Delete lead "${lead.leadName}"? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`/api/leads/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const json = await res.json();
+        setError(json?.error?.message || 'Failed to delete lead');
+        return;
+      }
+      window.location.href = '/leads';
+    } catch {
+      setError('Failed to delete lead');
+    }
   };
 
   const save = async () => {
@@ -196,6 +218,15 @@ export default function LeadDetailPage() {
                   >
                     Add Visit
                   </a>
+
+                  {isAdmin && (
+                    <button
+                      onClick={handleDelete}
+                      className="rounded-xl border border-red-400 px-5 py-3 text-sm font-bold text-red-500 hover:bg-red-50"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </>
               )}
             </div>

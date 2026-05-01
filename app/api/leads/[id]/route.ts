@@ -73,6 +73,43 @@ export async function GET(
   }
 }
 
+export async function DELETE(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = getUser(req);
+    if (!user) {
+      return NextResponse.json(
+        { error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } },
+        { status: 401 }
+      );
+    }
+    if (user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: { code: 'FORBIDDEN', message: 'Admin only' } },
+        { status: 403 }
+      );
+    }
+    const { id } = await context.params;
+    const existing = await prisma.lead.findUnique({ where: { id } });
+    if (!existing) {
+      return NextResponse.json(
+        { error: { code: 'NOT_FOUND', message: 'Lead not found' } },
+        { status: 404 }
+      );
+    }
+    await prisma.lead.delete({ where: { id } });
+    return NextResponse.json({ data: { success: true } });
+  } catch (error) {
+    console.error('DELETE /api/leads/[id] failed:', error);
+    return NextResponse.json(
+      { error: { code: 'INTERNAL_SERVER_ERROR', message: 'Failed to delete lead' } },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PATCH(
   req: NextRequest,
   context: { params: Promise<{ id: string }> }
