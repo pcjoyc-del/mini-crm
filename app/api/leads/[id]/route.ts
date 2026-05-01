@@ -99,7 +99,10 @@ export async function DELETE(
         { status: 404 }
       );
     }
-    await prisma.lead.delete({ where: { id } });
+    await prisma.$transaction([
+      prisma.leadVisit.deleteMany({ where: { leadId: id } }),
+      prisma.lead.delete({ where: { id } }),
+    ]);
     return NextResponse.json({ data: { success: true } });
   } catch (error) {
     console.error('DELETE /api/leads/[id] failed:', error);
