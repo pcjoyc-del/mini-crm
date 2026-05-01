@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 
 type Option = { label: string; value: string };
@@ -48,6 +48,9 @@ export default function LeadDetailPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const conversionRef = useRef<HTMLElement>(null);
+  const prevStatusRef = useRef<string | null>(null);
+
   const [interestedModelOptions, setInterestedModelOptions] = useState<Option[] | null>(null);
   const [categoryOptions, setCategoryOptions] = useState<Option[] | null>(null);
   const [materialOptions, setMaterialOptions] = useState<Option[] | null>(null);
@@ -62,6 +65,17 @@ export default function LeadDetailPage() {
       materialCodes: lead.materials?.map((m: any) => m.code) ?? [],
     };
   }
+
+  useEffect(() => {
+    if (
+      form?.status === 'WON' &&
+      prevStatusRef.current !== null &&
+      prevStatusRef.current !== 'WON'
+    ) {
+      conversionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    prevStatusRef.current = form?.status ?? null;
+  }, [form?.status]);
 
   useEffect(() => {
     fetch(`/api/leads/${id}`)
@@ -247,7 +261,7 @@ export default function LeadDetailPage() {
         </section>
 
         {isWon ? (
-          <section className="rounded-2xl bg-white p-5 shadow-sm">
+          <section ref={conversionRef} className="rounded-2xl bg-white p-5 shadow-sm">
             <h2 className="mb-4 text-lg font-bold text-stone-700">Conversion</h2>
 
             <div className="grid gap-4 md:grid-cols-2">
